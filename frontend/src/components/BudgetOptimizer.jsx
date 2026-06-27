@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { api } from '../services/api';
 import { Coins, TrendingDown, Users, CheckCircle2, ShieldAlert, Zap } from 'lucide-react';
 
-export default function BudgetOptimizer({ onApplyPlan }) {
+export default function BudgetOptimizer({ onApplyPlan, onSelectZone, city = 'vijayawada' }) {
   const [budgetCrore, setBudgetCrore] = useState('10');
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ export default function BudgetOptimizer({ onApplyPlan }) {
     setLoading(true);
     setError(null);
     try {
-      const data = await api.optimizeBudget(budgetCrore);
+      const data = await api.optimizeBudget(budgetCrore, city);
       setResults(data);
     } catch (err) {
       setError("Failed to calculate budget allocation. Please try again.");
@@ -136,7 +136,12 @@ export default function BudgetOptimizer({ onApplyPlan }) {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {results.selected_zones.map((zone, index) => (
-                  <div key={zone.id} className="sub-card" style={{ borderLeft: `4px solid var(--primary-green)`, background: 'rgba(255,255,255,0.005)' }}>
+                  <div 
+                    key={zone.id} 
+                    className="sub-card" 
+                    onClick={() => onSelectZone && onSelectZone(zone.id)}
+                    style={{ borderLeft: `4px solid var(--primary-green)`, background: 'rgba(255,255,255,0.005)', cursor: onSelectZone ? 'pointer' : 'default' }}
+                  >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(16,185,129,0.08)', color: 'var(--primary-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 800, border: '1px solid rgba(16,185,129,0.2)' }}>

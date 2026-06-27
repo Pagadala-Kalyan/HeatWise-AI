@@ -26,26 +26,37 @@ def optimize_cooling_investments(features, budget_rupees):
         })
         
     n = len(items)
-    best_value = -1
-    best_combination = []
-    
-    # Since n=12 is very small (2^12 = 4096 combinations), we can find the exact global optimum 
-    # instantly using a bitmask combination search.
-    for i in range(1 << n):
-        current_combination = []
-        current_cost = 0
-        current_benefit = 0
+
+    # Scale down the costs dynamically to make the DP table size manageable
+    # 100,000 Rupees (₹1 Lakh) is our base scaling step
+    scale_factor = 100000
+    if budget_rupees < scale_factor:
+        scale_factor = 1
+    elif budget_rupees // scale_factor > 5000:
+        scale_factor = budget_rupees // 5000
         
-        for j in range(n):
-            if (i >> j) & 1:
-                current_combination.append(items[j])
-                current_cost += items[j]["cost"]
-                current_benefit += items[j]["benefit"]
+    scaled_budget = int(budget_rupees // scale_factor)
+    
+    # dp[i][w] represents the maximum benefit of first i items with budget w
+    dp = [[0] * (scaled_budget + 1) for _ in range(n + 1)]
+    
+    for i in range(1, n + 1):
+        item_cost = max(1, int(items[i-1]["cost"] // scale_factor))
+        item_benefit = items[i-1]["benefit"]
+        for w in range(scaled_budget + 1):
+            if item_cost <= w:
+                dp[i][w] = max(dp[i-1][w], dp[i-1][w - item_cost] + item_benefit)
+            else:
+                dp[i][w] = dp[i-1][w]
                 
-        if current_cost <= budget_rupees:
-            if current_benefit > best_value:
-                best_value = current_benefit
-                best_combination = current_combination
+    # Backtrack to find the selected items
+    best_combination = []
+    w = scaled_budget
+    for i in range(n, 0, -1):
+        item_cost = max(1, int(items[i-1]["cost"] // scale_factor))
+        if dp[i][w] != dp[i-1][w]:
+            best_combination.append(items[i-1])
+            w -= item_cost
                 
     total_cost = sum(item["cost"] for item in best_combination)
     total_cooling = sum(item["expected_cooling"] for item in best_combination)

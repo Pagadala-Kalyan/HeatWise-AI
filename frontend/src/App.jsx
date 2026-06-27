@@ -14,8 +14,30 @@ import {
   AlertTriangle,
   RotateCcw,
   Compass,
-  Heart
+  Heart,
+  ChevronDown
 } from 'lucide-react';
+
+const CITY_CONFIG = {
+  vijayawada: {
+    label: 'Vijayawada',
+    state: 'Andhra Pradesh',
+    center: [16.5062, 80.6480],
+    zoom: 12
+  },
+  hyderabad: {
+    label: 'Hyderabad',
+    state: 'Telangana',
+    center: [17.4065, 78.4772],
+    zoom: 11
+  },
+  visakhapatnam: {
+    label: 'Visakhapatnam',
+    state: 'Andhra Pradesh',
+    center: [17.7231, 83.2985],
+    zoom: 12
+  }
+};
 
 export default function App() {
   const [geoJsonData, setGeoJsonData] = useState(null);
@@ -23,27 +45,35 @@ export default function App() {
   const [activeLayer, setActiveLayer] = useState('residual_heat'); // default layer
   const [simulatedZoneData, setSimulatedZoneData] = useState(null);
   const [activeRightTab, setActiveRightTab] = useState('diagnosis'); // 'diagnosis' or 'optimizer'
+  const [selectedCity, setSelectedCity] = useState('vijayawada');
   
   // Stores batch simulation results when a budget plan is applied
   const [appliedPlanSimulations, setAppliedPlanSimulations] = useState(null); 
   const [loading, setLoading] = useState(true);
+  const [isOffline, setIsOffline] = useState(false);
 
   // Load initial city map data
   useEffect(() => {
     async function loadData() {
       setLoading(true);
-      const data = await api.getCityData();
+      setSelectedZone(null);
+      setSimulatedZoneData(null);
+      setAppliedPlanSimulations(null);
+      const data = await api.getCityData(selectedCity);
       setGeoJsonData(data);
+      setIsOffline(api.isOffline);
       
-      // Auto-select One Town (the hottest zone) on load
+      // Auto-select the hottest zone on load
       if (data && data.features && data.features.length > 0) {
-        const oneTown = data.features.find(f => f.properties.name === "One Town") || data.features[0];
-        setSelectedZone(oneTown);
+        const hottest = data.features.reduce((a, b) =>
+          b.properties.actual_temp > a.properties.actual_temp ? b : a
+        , data.features[0]);
+        setSelectedZone(hottest);
       }
       setLoading(false);
     }
     loadData();
-  }, []);
+  }, [selectedCity]);
 
   // Handle single zone simulator outputs
   const handleSimulationComplete = (simData) => {
@@ -59,28 +89,29 @@ export default function App() {
   const handleApplyBudgetPlan = async (selectedPlanZones) => {
     if (!geoJsonData) return;
     
-    // Simulate each zone in the plan
-    const simulatedMap = {};
-    for (const zone of selectedPlanZones) {
-      // Create simulation values based on intervention
-      let trees = 0;
-      let coolRoofs = 0;
-      let pavement = false;
+    // Create batch simulation inputs
+    const simulations = selectedPlanZones.map(zone => {
+      let trees_added = 0;
+      let cool_roofs_percentage = 0;
+      let reflective_pavement = false;
 
       if (zone.intervention.includes("Tree")) {
-        trees = 250;
+        trees_added = 250;
       } else if (zone.intervention.includes("Roof")) {
-        coolRoofs = 100;
+        cool_roofs_percentage = 100;
       } else if (zone.intervention.includes("Pavement")) {
-        pavement = true;
+        reflective_pavement = true;
       }
 
-      // Simulate client-side using our helper in api client
-      const sim = await api.simulateIntervention(zone.id, trees, coolRoofs, pavement);
-      if (sim) {
-        simulatedMap[zone.id] = sim;
-      }
-    }
+      return {
+        zone_id: zone.id,
+        trees_added,
+        cool_roofs_percentage,
+        reflective_pavement
+      };
+    });
+
+    const simulatedMap = await api.simulateBatchInterventions(simulations, selectedCity);
     
     setAppliedPlanSimulations(simulatedMap);
     setSimulatedZoneData(null); // Clear single simulator view
@@ -157,8 +188,43 @@ export default function App() {
               <RotateCcw size={12} style={{ cursor: 'pointer', marginLeft: '6px' }} onClick={handleClearPlanSimulation} title="Clear Plan Simulation" />
             </div>
           )}
+          {isOffline ? (
+            <div className="glass-panel" style={{ padding: '8px 16px', background: 'rgba(239,68,68,0.08)', color: 'var(--primary-red)', fontSize: '12px', fontWeight: 700, borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid rgba(239,68,68,0.2)' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary-red)' }}></span>
+              Offline Mode (Demo)
+            </div>
+          ) : (
+            <div className="glass-panel" style={{ padding: '8px 16px', background: 'rgba(16,185,129,0.08)', color: 'var(--primary-green)', fontSize: '12px', fontWeight: 700, borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '6px', border: '1px solid rgba(16,185,129,0.2)' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary-green)', animation: 'pulseDot 2s infinite' }}></span>
+              Live ML Backend
+            </div>
+          )}
           <div className="glass-panel" style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 500, borderRadius: '10px' }}>
-            📍 <strong style={{ color: 'white' }}>Vijayawada, India</strong>
+            📍
+            <select
+              id="city-selector"
+              value={selectedCity}
+              onChange={(e) => setSelectedCity(e.target.value)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'white',
+                fontWeight: 700,
+                fontSize: '12px',
+                fontFamily: 'Outfit, sans-serif',
+                cursor: 'pointer',
+                outline: 'none',
+                appearance: 'none',
+                paddingRight: '20px'
+              }}
+            >
+              {Object.entries(CITY_CONFIG).map(([key, cfg]) => (
+                <option key={key} value={key} style={{ background: '#0d1117', color: 'white' }}>
+                  {cfg.label}, {cfg.state}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={12} style={{ color: 'var(--text-secondary)', marginLeft: '-16px', pointerEvents: 'none' }} />
           </div>
           <div className="glass-panel" style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 500, borderRadius: '10px' }}>
             🌡️ Mean Temp: <strong style={{ color: 'var(--primary-red)' }}>{avgTemp}°C</strong>
@@ -257,7 +323,18 @@ export default function App() {
           {/* Tab Contents */}
           <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             {activeRightTab === 'optimizer' ? (
-              <BudgetOptimizer onApplyPlan={handleApplyBudgetPlan} />
+              <BudgetOptimizer 
+                onApplyPlan={handleApplyBudgetPlan} 
+                city={selectedCity}
+                onSelectZone={(zoneId) => {
+                  if (!geoJsonData) return;
+                  const zoneFeature = geoJsonData.features.find(f => f.properties.id === zoneId);
+                  if (zoneFeature) {
+                    setSelectedZone(zoneFeature);
+                    setActiveRightTab('diagnosis');
+                  }
+                }}
+              />
             ) : (
               <>
                 {/* Zone Details / Diagnosis Panel */}
@@ -349,6 +426,7 @@ export default function App() {
                 <div>
                   <WhatIfSimulator 
                     selectedZone={selectedZone}
+                    city={selectedCity}
                     onSimulationComplete={handleSimulationComplete}
                     onResetSimulation={handleResetSimulation}
                   />

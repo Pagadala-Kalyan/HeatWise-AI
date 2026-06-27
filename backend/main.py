@@ -31,17 +31,29 @@ predictor.train_model()
 # Request and Response Schemas
 class BudgetRequest(BaseModel):
     budget_crore: float = Field(..., gt=0, description="Budget in Crores (₹1 Crore = 10,000,000 Rupees)")
+    city: Optional[str] = Field("vijayawada", description="City name")
 
 class SimulationRequest(BaseModel):
     zone_id: int = Field(..., description="ID of the zone to simulate")
     trees_added: int = Field(0, ge=0, le=500, description="Number of trees to add (0-500)")
     cool_roofs_percentage: int = Field(0, ge=0, le=100, description="Percentage of roofs converted to cool roofs (0-100)")
     reflective_pavement: bool = Field(False, description="Whether to apply reflective pavement")
+    city: Optional[str] = Field("vijayawada", description="City name")
+
+class ZoneSimulationInput(BaseModel):
+    zone_id: int = Field(..., description="ID of the zone to simulate")
+    trees_added: int = Field(0, ge=0, le=500, description="Number of trees to add (0-500)")
+    cool_roofs_percentage: int = Field(0, ge=0, le=100, description="Percentage of roofs converted to cool roofs (0-100)")
+    reflective_pavement: bool = Field(False, description="Whether to apply reflective pavement")
+
+class BatchSimulationRequest(BaseModel):
+    simulations: List[ZoneSimulationInput]
+    city: Optional[str] = Field("vijayawada", description="City name")
 
 @app.get("/api/city-data")
-def get_city_data():
+def get_city_data(city: str = "vijayawada"):
     try:
-        geojson = predictor.process_city_data()
+        geojson = predictor.process_city_data(city)
         return geojson
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -49,7 +61,8 @@ def get_city_data():
 @app.post("/api/optimize")
 def optimize_budget(req: BudgetRequest):
     try:
-        geojson = predictor.process_city_data()
+        city = req.city or "vijayawada"
+        geojson = predictor.process_city_data(city)
         features = geojson["features"]
         # Convert Crore to Rupees
         budget_rupees = int(req.budget_crore * 10000000)
@@ -61,7 +74,8 @@ def optimize_budget(req: BudgetRequest):
 @app.post("/api/simulate")
 def simulate_intervention(req: SimulationRequest):
     try:
-        geojson = predictor.process_city_data()
+        city = req.city or "vijayawada"
+        geojson = predictor.process_city_data(city)
         target_feature = None
         
         for feature in geojson["features"]:
@@ -126,6 +140,69 @@ def simulate_intervention(req: SimulationRequest):
             }
         }
         
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/simulate-batch")
+def simulate_batch_interventions(req: BatchSimulationRequest):
+    try:
+        city = req.city or "vijayawada"
+        geojson = predictor.process_city_data(city)
+        features_map = {f["properties"]["id"]: f for f in geojson["features"]}
+        
+        results = {}
+        for sim_input in req.simulations:
+            zone_id = sim_input.zone_id
+            if zone_id not in features_map:
+                continue
+                
+            feature = features_map[zone_id]
+            props = feature["properties"]
+            
+            # Calculate new environmental indicators based on inputs
+            ndvi_delta = sim_input.trees_added * 0.0012
+            ndvi_new = min(0.85, props["ndvi"] + ndvi_delta)
+            
+            albedo_delta_roofs = (sim_input.cool_roofs_percentage / 100.0) * 0.08
+            albedo_delta_pave = 0.04 if sim_input.reflective_pavement else 0.0
+            albedo_new = min(0.35, props["albedo"] + albedo_delta_roofs + albedo_delta_pave)
+            
+            density_delta = (sim_input.trees_added * 0.0002) + ((sim_input.cool_roofs_percentage / 100.0) * 0.02)
+            density_new = max(0.1, props["building_density"] - density_delta)
+            
+            expected_temp_new = predictor.predict_expected(ndvi_new, density_new, albedo_new)
+            
+            temp_reduction = (
+                (ndvi_new - props["ndvi"]) * 11.5 + 
+                (albedo_new - props["albedo"]) * 9.5
+            )
+            
+            actual_temp_new = max(30.0, props["actual_temp"] - temp_reduction)
+            residual_heat_new = actual_temp_new - expected_temp_new
+            
+            results[str(zone_id)] = {
+                "zone_id": zone_id,
+                "name": props["name"],
+                "original": {
+                    "ndvi": round(props["ndvi"], 3),
+                    "albedo": round(props["albedo"], 3),
+                    "building_density": round(props["building_density"], 3),
+                    "actual_temp": round(props["actual_temp"], 1),
+                    "expected_temp": round(props["expected_temp"], 1),
+                    "residual_heat": round(props["residual_heat"], 1)
+                },
+                "simulated": {
+                    "ndvi": round(ndvi_new, 3),
+                    "albedo": round(albedo_new, 3),
+                    "building_density": round(density_new, 3),
+                    "actual_temp": round(actual_temp_new, 1),
+                    "expected_temp": round(expected_temp_new, 1),
+                    "residual_heat": round(residual_heat_new, 1),
+                    "temp_reduction": round(temp_reduction, 1)
+                }
+            }
+            
+        return results
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
