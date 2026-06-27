@@ -1,0 +1,485 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 1,
+        "name": "One Town",
+        "ndvi": 0.12,
+        "building_density": 0.92,
+        "albedo": 0.11,
+        "actual_temp": 44.8,
+        "population_density": 22000,
+        "area_sq_km": 1.8
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.6075,
+              16.5125
+            ],
+            [
+              80.62249999999999,
+              16.5125
+            ],
+            [
+              80.62249999999999,
+              16.5275
+            ],
+            [
+              80.6075,
+              16.5275
+            ],
+            [
+              80.6075,
+              16.5125
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 2,
+        "name": "Benz Circle",
+        "ndvi": 0.18,
+        "building_density": 0.85,
+        "albedo": 0.13,
+        "actual_temp": 43.2,
+        "population_density": 18000,
+        "area_sq_km": 2.2
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.6405,
+              16.4925
+            ],
+            [
+              80.65549999999999,
+              16.4925
+            ],
+            [
+              80.65549999999999,
+              16.5075
+            ],
+            [
+              80.6405,
+              16.5075
+            ],
+            [
+              80.6405,
+              16.4925
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 3,
+        "name": "Patamata",
+        "ndvi": 0.32,
+        "building_density": 0.65,
+        "albedo": 0.16,
+        "actual_temp": 40.5,
+        "population_density": 12000,
+        "area_sq_km": 3.0
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.65750000000001,
+              16.4875
+            ],
+            [
+              80.6725,
+              16.4875
+            ],
+            [
+              80.6725,
+              16.5025
+            ],
+            [
+              80.65750000000001,
+              16.5025
+            ],
+            [
+              80.65750000000001,
+              16.4875
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 4,
+        "name": "Governorpet",
+        "ndvi": 0.15,
+        "building_density": 0.88,
+        "albedo": 0.12,
+        "actual_temp": 43.9,
+        "population_density": 20000,
+        "area_sq_km": 1.5
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.6225,
+              16.5045
+            ],
+            [
+              80.63749999999999,
+              16.5045
+            ],
+            [
+              80.63749999999999,
+              16.5195
+            ],
+            [
+              80.6225,
+              16.5195
+            ],
+            [
+              80.6225,
+              16.5045
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 5,
+        "name": "Gunadala",
+        "ndvi": 0.38,
+        "building_density": 0.52,
+        "albedo": 0.17,
+        "actual_temp": 39.2,
+        "population_density": 8500,
+        "area_sq_km": 3.5
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.65750000000001,
+              16.5105
+            ],
+            [
+              80.6725,
+              16.5105
+            ],
+            [
+              80.6725,
+              16.5255
+            ],
+            [
+              80.65750000000001,
+              16.5255
+            ],
+            [
+              80.65750000000001,
+              16.5105
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 6,
+        "name": "Vidyadharapuram",
+        "ndvi": 0.22,
+        "building_density": 0.78,
+        "albedo": 0.14,
+        "actual_temp": 42.5,
+        "population_density": 15000,
+        "area_sq_km": 2.8
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.5925,
+              16.5225
+            ],
+            [
+              80.60749999999999,
+              16.5225
+            ],
+            [
+              80.60749999999999,
+              16.5375
+            ],
+            [
+              80.5925,
+              16.5375
+            ],
+            [
+              80.5925,
+              16.5225
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 7,
+        "name": "Kanuru",
+        "ndvi": 0.42,
+        "building_density": 0.45,
+        "albedo": 0.19,
+        "actual_temp": 38.1,
+        "population_density": 6000,
+        "area_sq_km": 4.0
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.67750000000001,
+              16.4725
+            ],
+            [
+              80.6925,
+              16.4725
+            ],
+            [
+              80.6925,
+              16.4875
+            ],
+            [
+              80.67750000000001,
+              16.4875
+            ],
+            [
+              80.67750000000001,
+              16.4725
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 8,
+        "name": "Gollapudi",
+        "ndvi": 0.55,
+        "building_density": 0.28,
+        "albedo": 0.2,
+        "actual_temp": 36.8,
+        "population_density": 3500,
+        "area_sq_km": 5.0
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.56750000000001,
+              16.5375
+            ],
+            [
+              80.5825,
+              16.5375
+            ],
+            [
+              80.5825,
+              16.552500000000002
+            ],
+            [
+              80.56750000000001,
+              16.552500000000002
+            ],
+            [
+              80.56750000000001,
+              16.5375
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 9,
+        "name": "Moghalrajpuram",
+        "ndvi": 0.28,
+        "building_density": 0.72,
+        "albedo": 0.15,
+        "actual_temp": 41.1,
+        "population_density": 14000,
+        "area_sq_km": 2.0
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.6375,
+              16.4975
+            ],
+            [
+              80.65249999999999,
+              16.4975
+            ],
+            [
+              80.65249999999999,
+              16.5125
+            ],
+            [
+              80.6375,
+              16.5125
+            ],
+            [
+              80.6375,
+              16.4975
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 10,
+        "name": "Bhavanipuram",
+        "ndvi": 0.35,
+        "building_density": 0.58,
+        "albedo": 0.17,
+        "actual_temp": 39.8,
+        "population_density": 11000,
+        "area_sq_km": 2.5
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.58250000000001,
+              16.5175
+            ],
+            [
+              80.5975,
+              16.5175
+            ],
+            [
+              80.5975,
+              16.5325
+            ],
+            [
+              80.58250000000001,
+              16.5325
+            ],
+            [
+              80.58250000000001,
+              16.5175
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 11,
+        "name": "Satyanarayanapuram",
+        "ndvi": 0.2,
+        "building_density": 0.82,
+        "albedo": 0.13,
+        "actual_temp": 42.9,
+        "population_density": 17000,
+        "area_sq_km": 1.9
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.63050000000001,
+              16.5175
+            ],
+            [
+              80.6455,
+              16.5175
+            ],
+            [
+              80.6455,
+              16.5325
+            ],
+            [
+              80.63050000000001,
+              16.5325
+            ],
+            [
+              80.63050000000001,
+              16.5175
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 12,
+        "name": "Krishnalanka",
+        "ndvi": 0.25,
+        "building_density": 0.8,
+        "albedo": 0.14,
+        "actual_temp": 41.8,
+        "population_density": 19000,
+        "area_sq_km": 2.1
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              80.6225,
+              16.4875
+            ],
+            [
+              80.63749999999999,
+              16.4875
+            ],
+            [
+              80.63749999999999,
+              16.5025
+            ],
+            [
+              80.6225,
+              16.5025
+            ],
+            [
+              80.6225,
+              16.4875
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
