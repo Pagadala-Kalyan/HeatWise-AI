@@ -135,13 +135,15 @@ export default function MapView({
       {/* Map Legend Floating Container */}
       <div className="glass-panel" style={{
         position: 'absolute',
-        bottom: '20px',
-        left: '20px',
+        bottom: '24px',
+        left: '24px',
         zIndex: 1000,
-        padding: '12px 16px',
+        padding: '14px 18px',
         pointerEvents: 'auto',
-        background: 'rgba(10, 15, 30, 0.85)',
-        border: '1px solid rgba(255,255,255,0.1)'
+        background: 'rgba(4, 7, 18, 0.85)',
+        borderColor: 'rgba(255,255,255,0.08)',
+        borderRadius: '14px',
+        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.5)'
       }}>
         <h4 style={{ fontSize: '12px', color: 'var(--text-primary)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           {activeLayer === 'actual_temp' && 'Surface Temp (°C)'}

@@ -134,15 +134,15 @@ export default function MetricsChart({ geoJsonData, simulatedZoneData }) {
   };
 
   return (
-    <div className="glass-panel" style={{ padding: '20px', height: '100%', minHeight: '300px', display: 'flex', flexDirection: 'column' }}>
-      <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: 600, marginBottom: '12px' }}>
+    <div className="glass-panel glow-blue animate-fade-in" style={{ padding: '24px', height: '380px', display: 'flex', flexDirection: 'column' }}>
+      <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '15px', fontWeight: 600, marginBottom: '16px' }}>
         <BarChart3 size={18} className="grad-text-cool" />
         Temperature Deviations: Actual vs Expected AI Model Baseline
       </h3>
-      <div style={{ flexGrow: 1, position: 'relative', minHeight: '200px' }}>
+      <div style={{ flexGrow: 1, position: 'relative', minHeight: '260px' }}>
         <Bar data={data} options={options} />
       </div>
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', fontSize: '10px', color: 'var(--text-dim)', marginTop: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', fontSize: '11px', color: 'var(--text-secondary)', marginTop: '12px', borderTop: '1px solid var(--border-light)', paddingTop: '10px' }}>
         <span>⚠️ Anomaly: Actual (Red) &gt; Expected (Blue)</span>
         <span>✅ Optimal: Actual (Red) &lt;= Expected (Blue)</span>
       </div>
