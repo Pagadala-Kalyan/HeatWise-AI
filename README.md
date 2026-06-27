@@ -1,3 +1,12 @@
+---
+title: HeatWise AI
+emoji: 🌍
+colorFrom: blue
+colorTo: green
+sdk: docker
+app_port: 7860
+pinned: false
+---
 # ❄️ HeatWise AI — AI-Powered Urban Cooling Decision Engine
 
 > **"Helping cities spend every cooling dollar where it delivers the maximum impact."**
