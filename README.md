@@ -27,20 +27,26 @@ Two streets with the identical high temperatures may require completely differen
 
 ## 🌟 Core Features
 
-### 1. Residual Heat Anomaly Detection (USP)
-Instead of looking at raw heat, HeatWise AI trains a **Random Forest Regressor** to predict the *Expected Temperature* of an area based on its physical properties. It then calculates the **Residual Heat** (`Actual - Expected`). Areas with high positive residuals represent microclimate anomalies that are hotter than they should be, indicating localized heat traps.
+### 1. Real OSM Neighborhood Boundary Mapping
+Instead of static predefined grids, HeatWise AI queries coordinates or city searches via the **OpenStreetMap Overpass API** to fetch real neighborhood, suburb, and quarter nodes. It runs the **Sutherland-Hodgman clipping algorithm** to build organic, gap-free Voronoi boundary overlays that mirror real city maps.
 
-### 2. Microclimate Cause Diagnosis
-The engine analyzes local deviations against baseline features to classify the dominant cause of overheating (e.g. low canopy vegetation, dense concrete structure, or dark surface materials) along with a diagnostic confidence percentage.
+### 2. Residual Heat Anomaly Detection (USP)
+Instead of raw heat, HeatWise AI trains a **Random Forest Regressor** to predict the *Expected Temperature* of an area based on physical parameters (NDVI, Albedo, Building Density). The **Residual Heat** anomaly (`Actual - Expected`) identifies prioritized cooling traps (>0.5°C).
 
-### 3. Actionable cooling Recommendations
-Rather than showing generic advice, the engine matches diagnosed causes with concrete interventions, calculating the **Expected Temperature Drop (°C)**, estimated costs in Indian Rupees (₹), and deployment timeframe.
+### 3. Causal Diagnostics & Intervention Roadmap
+Classifies the dominant cause of localized heating (e.g., vegetation canopy deficits, dense building masses, low solar albedo) with confidence margins. It recommends specific interventions (Cool Roofs, Tree Canopies, Reflective Asphalt) with costs (₹), timeframes, and projected UHI drop metrics.
 
-### 4. Interactive What-If Simulator
-Allows planners to select a neighborhood on the map, adjust sliders (e.g., add 150 trees, cover 60% of roofs, lay cool pavements), and run a simulator. The heat map and temperature plots update in real-time, displaying the physical cooling ROI.
+### 4. Interactive What-If Sandbox
+Planners can select any neighborhood and test physical interventions (adding trees, coating roofs, installing reflective pavements) via sliders. The simulator updates heat maps, metrics, and chart plots dynamically.
 
-### 5. Smart Budget Optimizer (0-1 Knapsack Solver)
-Planners input their total cooling budget (e.g. ₹10 Crore). The engine solves a **0-1 Knapsack Optimization Problem** that maximizes the **Person-Degrees of Cooling** (cooling impact $\times$ population density $\times$ area), returning the highest-ROI investment plan.
+### 5. Budget Allocation Optimizer (0-1 Knapsack Solver)
+Planners input a city-wide funding limit (in Crores). The decision engine solves a **0-1 Knapsack Optimization Problem** maximizing cumulative UHI cooling ROI (**Person-Degrees of Cooling**). A priority roadmap is generated, which planners can simulate globally on the map.
+
+### 6. Cosmoq & Holographic Blueprint Aesthetics
+* **Swaying Auroras**: Reactive vertical light pillars (cyan, orange, magenta) sway in the background.
+* **Holographic Blueprint Map**: WebGL/CSS filters transform standard street tiles into glowing cyan holographic blueprint meshes.
+* **Reactive Double-Theme Switcher**: Swaps between cosmic Dark Mode and high-contrast Slate-Gray Light Mode, adjusting map basemaps, input fields, and legend panels.
+* **Client-Backend Zone Synchronization**: Passes active geocoded map datasets in the JSON payload to backend endpoints (`/api/optimize`, `/api/simulate-batch`) to guarantee 100% synchronized neighborhood naming and metrics.
 
 ---
 
@@ -54,34 +60,33 @@ Planners input their total cooling budget (e.g. ₹10 Crore). The engine solves 
 ---
 
 ## 📁 Repository Structure
-```
+
+```text
 HeatWise-AI/
  ├── backend/
  │    ├── ml/
- │    │    ├── data_generator.py   # Generates Vijayawada grid polygons
- │    │    ├── predictor.py        # RF model training & cause diagnosis
- │    │    └── optimizer.py        # Knapsack budget optimizer
+ │    │    ├── data_generator.py   # Live OSM Overpass query & Voronoi clipper
+ │    │    ├── predictor.py        # RF model training & UHI diagnostics
+ │    │    └── optimizer.py        # Knapsack budget allocator
  │    ├── data/
- │    │    └── vijayawada_grid.json # GeoJSON city dataset
- │    ├── main.py                  # FastAPI server & route handlers
- │    ├── test_ml.py               # Backend ML test suite
+ │    │    └── vijayawada_grid.json # Backup preset city dataset
+ │    ├── main.py                  # FastAPI route controllers
+ │    ├── test_ml.py               # Backend ML verification suite
  │    └── requirements.txt         # Python libraries
  ├── frontend/
- │    ├── public/
  │    ├── src/
  │    │    ├── components/
- │    │    │    ├── MapView.jsx          # Leaflet map styling & overlay
- │    │    │    ├── BudgetOptimizer.jsx  # Knapsack UI & budget summary
+ │    │    │    ├── MapView.jsx          # Leaflet map renderer & filters
+ │    │    │    ├── BudgetOptimizer.jsx  # Knapsack roadmap layout
  │    │    │    ├── WhatIfSimulator.jsx  # Sliders & simulation delta
- │    │    │    └── MetricsChart.jsx     # Side-by-side bar chart
+ │    │    │    └── MetricsChart.jsx     # Comparison plots
  │    │    ├── services/
- │    │    │    └── api.js               # API client with offline fallback
- │    │    ├── App.jsx                   # Main layout and tab controller
- │    │    ├── index.css                 # Custom glassmorphic styling
- │    │    └── main.jsx
- │    ├── package.json
- │    └── vite.config.js
- ├── Dockerfile                     # Multi-stage Docker config
+ │    │    │    └── api.js               # API client with zone-state sync
+ │    │    ├── App.jsx                   # Layout, navigation, & theme state
+ │    │    ├── index.css                 # Custom HSL variables & keyframes
+ ├── Dockerfile                     # Multi-stage Docker deployment config
+ ├── FEATURES_GUIDE.md              # Markdown features list & user manual
+ ├── FEATURES_GUIDE.docx            # Microsoft Word document with embedded diagram
  └── README.md                      # Documentation
 ```
 
