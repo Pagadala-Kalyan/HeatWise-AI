@@ -10,7 +10,7 @@ if sys.platform.startswith('win'):
 # Add parent directory to path so we can import backend packages
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from backend.ml.data_generator import generate_vijayawada_data
+from backend.ml.data_generator import generate_city_data
 from backend.ml.predictor import HeatWisePredictor
 from backend.ml.optimizer import optimize_cooling_investments
 
@@ -19,7 +19,7 @@ def run_tests():
     
     # 1. Test data generator
     print("\n[Test 1] Generating raw Vijayawada grid GeoJSON...")
-    geojson = generate_vijayawada_data()
+    geojson = generate_city_data("vijayawada")
     assert geojson["type"] == "FeatureCollection"
     assert len(geojson["features"]) == 12
     print("SUCCESS: 12 zones generated in GeoJSON format.")

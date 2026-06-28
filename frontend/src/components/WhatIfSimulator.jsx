@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { Sun, Leaf, HelpCircle, ArrowRight, RotateCcw, AlertTriangle, ShieldCheck } from 'lucide-react';
 
-export default function WhatIfSimulator({ selectedZone, city = 'vijayawada', onSimulationComplete, onResetSimulation }) {
+export default function WhatIfSimulator({ selectedZone, city = 'vijayawada', latitude = null, longitude = null, onSimulationComplete, onResetSimulation }) {
   const [trees, setTrees] = useState(0);
   const [coolRoofsPercent, setCoolRoofsPercent] = useState(0);
   const [pavement, setPavement] = useState(false);
@@ -26,7 +26,9 @@ export default function WhatIfSimulator({ selectedZone, city = 'vijayawada', onS
         trees,
         coolRoofsPercent,
         pavement,
-        city
+        city,
+        latitude,
+        longitude
       );
       setSimResults(data);
       if (onSimulationComplete) {

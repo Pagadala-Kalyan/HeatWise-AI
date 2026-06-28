@@ -32,6 +32,8 @@ predictor.train_model()
 class BudgetRequest(BaseModel):
     budget_crore: float = Field(..., gt=0, description="Budget in Crores (₹1 Crore = 10,000,000 Rupees)")
     city: Optional[str] = Field("vijayawada", description="City name")
+    latitude: Optional[float] = Field(None, description="Latitude of custom location")
+    longitude: Optional[float] = Field(None, description="Longitude of custom location")
 
 class SimulationRequest(BaseModel):
     zone_id: int = Field(..., description="ID of the zone to simulate")
@@ -39,6 +41,8 @@ class SimulationRequest(BaseModel):
     cool_roofs_percentage: int = Field(0, ge=0, le=100, description="Percentage of roofs converted to cool roofs (0-100)")
     reflective_pavement: bool = Field(False, description="Whether to apply reflective pavement")
     city: Optional[str] = Field("vijayawada", description="City name")
+    latitude: Optional[float] = Field(None, description="Latitude of custom location")
+    longitude: Optional[float] = Field(None, description="Longitude of custom location")
 
 class ZoneSimulationInput(BaseModel):
     zone_id: int = Field(..., description="ID of the zone to simulate")
@@ -49,11 +53,13 @@ class ZoneSimulationInput(BaseModel):
 class BatchSimulationRequest(BaseModel):
     simulations: List[ZoneSimulationInput]
     city: Optional[str] = Field("vijayawada", description="City name")
+    latitude: Optional[float] = Field(None, description="Latitude of custom location")
+    longitude: Optional[float] = Field(None, description="Longitude of custom location")
 
 @app.get("/api/city-data")
-def get_city_data(city: str = "vijayawada"):
+def get_city_data(city: str = "vijayawada", latitude: Optional[float] = None, longitude: Optional[float] = None):
     try:
-        geojson = predictor.process_city_data(city)
+        geojson = predictor.process_city_data(city, latitude, longitude)
         return geojson
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -62,7 +68,7 @@ def get_city_data(city: str = "vijayawada"):
 def optimize_budget(req: BudgetRequest):
     try:
         city = req.city or "vijayawada"
-        geojson = predictor.process_city_data(city)
+        geojson = predictor.process_city_data(city, req.latitude, req.longitude)
         features = geojson["features"]
         # Convert Crore to Rupees
         budget_rupees = int(req.budget_crore * 10000000)
@@ -75,7 +81,7 @@ def optimize_budget(req: BudgetRequest):
 def simulate_intervention(req: SimulationRequest):
     try:
         city = req.city or "vijayawada"
-        geojson = predictor.process_city_data(city)
+        geojson = predictor.process_city_data(city, req.latitude, req.longitude)
         target_feature = None
         
         for feature in geojson["features"]:
@@ -147,7 +153,7 @@ def simulate_intervention(req: SimulationRequest):
 def simulate_batch_interventions(req: BatchSimulationRequest):
     try:
         city = req.city or "vijayawada"
-        geojson = predictor.process_city_data(city)
+        geojson = predictor.process_city_data(city, req.latitude, req.longitude)
         features_map = {f["properties"]["id"]: f for f in geojson["features"]}
         
         results = {}

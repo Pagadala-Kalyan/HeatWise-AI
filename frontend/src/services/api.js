@@ -169,33 +169,89 @@ function buildCityGeoJSON(zones) {
   };
 }
 
+async function fetchLiveTempOffline(lat, lon) {
+  try {
+    const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m`);
+    if (response.ok) {
+      const data = await response.json();
+      return parseFloat(data.current.temperature_2m);
+    }
+  } catch (e) {
+    console.warn("Failed to fetch live temp offline", e);
+  }
+  return 35.0;
+}
+
+function buildCustomMockDataset(city, lat, lon, baseTemp) {
+  const zoneOffsets = [
+    { id: 1, name: "City Center", lat_off: 0.0, lon_off: 0.0, ndvi: 0.12, density: 0.90, albedo: 0.12, population_density: 22000, area_sq_km: 1.5 },
+    { id: 2, name: "North District", lat_off: 0.015, lon_off: 0.0, ndvi: 0.28, density: 0.65, albedo: 0.15, population_density: 16000, area_sq_km: 1.8 },
+    { id: 3, name: "North-East Sector", lat_off: 0.011, lon_off: 0.011, ndvi: 0.35, density: 0.50, albedo: 0.18, population_density: 8000, area_sq_km: 3.2 },
+    { id: 4, name: "East Zone", lat_off: 0.0, lon_off: 0.015, ndvi: 0.22, density: 0.75, albedo: 0.13, population_density: 19000, area_sq_km: 2.0 },
+    { id: 5, name: "South-East Sector", lat_off: -0.011, lon_off: 0.011, ndvi: 0.40, density: 0.45, albedo: 0.19, population_density: 7500, area_sq_km: 3.5 },
+    { id: 6, name: "South District", lat_off: -0.015, lon_off: 0.0, ndvi: 0.30, density: 0.55, albedo: 0.16, population_density: 11000, area_sq_km: 2.2 },
+    { id: 7, name: "South-West Sector", lat_off: -0.011, lon_off: -0.011, ndvi: 0.48, density: 0.35, albedo: 0.21, population_density: 5000, area_sq_km: 4.0 },
+    { id: 8, name: "West Zone", lat_off: 0.0, lon_off: -0.015, ndvi: 0.18, density: 0.82, albedo: 0.14, population_density: 17500, area_sq_km: 2.1 },
+    { id: 9, name: "North-West Sector", lat_off: 0.011, lon_off: -0.011, ndvi: 0.25, density: 0.70, albedo: 0.16, population_density: 14000, area_sq_km: 2.4 },
+    { id: 10, name: "Inner Ring Road", lat_off: 0.007, lon_off: -0.007, ndvi: 0.15, density: 0.85, albedo: 0.12, population_density: 20500, area_sq_km: 1.7 },
+    { id: 11, name: "Industrial Suburb", lat_off: -0.007, lon_off: 0.007, ndvi: 0.08, density: 0.90, albedo: 0.10, population_density: 23000, area_sq_km: 2.3 },
+    { id: 12, name: "Riverside Extension", lat_off: -0.007, lon_off: -0.007, ndvi: 0.32, density: 0.60, albedo: 0.15, population_density: 12500, area_sq_km: 2.8 }
+  ];
+
+  const zones = zoneOffsets.map(z => {
+    const t_var = 3.5 * z.density - 4.5 * z.ndvi - 2.0 * z.albedo;
+    const actual_temp = parseFloat((baseTemp + t_var).toFixed(1));
+    return {
+      ...z,
+      center: [lat + z.lat_off, lon + z.lon_off],
+      actual_temp
+    };
+  });
+
+  return buildCityGeoJSON(zones);
+}
+
 export const api = {
   isOffline: false,
   activeMockDataset: null,
 
   // Fetch city GeoJSON data
-  async getCityData(city = "vijayawada") {
+  async getCityData(city = "vijayawada", latitude = null, longitude = null) {
     try {
-      const response = await fetch(`${API_BASE}/city-data?city=${city.toLowerCase()}`);
+      let url = `${API_BASE}/city-data?city=${encodeURIComponent(city.toLowerCase())}`;
+      if (latitude !== null && longitude !== null) {
+        url += `&latitude=${latitude}&longitude=${longitude}`;
+      }
+      const response = await fetch(url);
       if (!response.ok) throw new Error("Backend response error");
       this.isOffline = false;
       return await response.json();
     } catch (error) {
       console.warn("Backend offline. Loading local demonstration map data...", error);
       this.isOffline = true;
-      const zones = CITY_ZONES[city.toLowerCase()] || CITY_ZONES.vijayawada;
-      this.activeMockDataset = buildCityGeoJSON(zones);
+      if (latitude !== null && longitude !== null) {
+        const baseTemp = await fetchLiveTempOffline(latitude, longitude);
+        this.activeMockDataset = buildCustomMockDataset(city, latitude, longitude, baseTemp);
+      } else {
+        const zones = CITY_ZONES[city.toLowerCase()] || CITY_ZONES.vijayawada;
+        this.activeMockDataset = buildCityGeoJSON(zones);
+      }
       return JSON.parse(JSON.stringify(this.activeMockDataset));
     }
   },
 
   // Solve budget optimization problem (Knapsack)
-  async optimizeBudget(budgetCrore, city = "vijayawada") {
+  async optimizeBudget(budgetCrore, city = "vijayawada", latitude = null, longitude = null) {
     try {
       const response = await fetch(`${API_BASE}/optimize`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ budget_crore: parseFloat(budgetCrore), city })
+        body: JSON.stringify({ 
+          budget_crore: parseFloat(budgetCrore), 
+          city,
+          latitude: latitude !== null ? parseFloat(latitude) : null,
+          longitude: longitude !== null ? parseFloat(longitude) : null
+        })
       });
       if (!response.ok) throw new Error("Backend optimization failed");
       this.isOffline = false;
@@ -210,7 +266,7 @@ export const api = {
   },
 
   // Run a what-if microclimate simulation
-  async simulateIntervention(zoneId, trees, coolRoofsPercent, pavement, city = "vijayawada") {
+  async simulateIntervention(zoneId, trees, coolRoofsPercent, pavement, city = "vijayawada", latitude = null, longitude = null) {
     try {
       const response = await fetch(`${API_BASE}/simulate`, {
         method: "POST",
@@ -220,7 +276,9 @@ export const api = {
           trees_added: parseInt(trees || 0),
           cool_roofs_percentage: parseInt(coolRoofsPercent || 0),
           reflective_pavement: !!pavement,
-          city
+          city,
+          latitude: latitude !== null ? parseFloat(latitude) : null,
+          longitude: longitude !== null ? parseFloat(longitude) : null
         })
       });
       if (!response.ok) throw new Error("Backend simulation failed");
@@ -236,12 +294,17 @@ export const api = {
   },
 
   // Run batch microclimate simulations
-  async simulateBatchInterventions(simulations, city = "vijayawada") {
+  async simulateBatchInterventions(simulations, city = "vijayawada", latitude = null, longitude = null) {
     try {
       const response = await fetch(`${API_BASE}/simulate-batch`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ simulations, city })
+        body: JSON.stringify({ 
+          simulations, 
+          city,
+          latitude: latitude !== null ? parseFloat(latitude) : null,
+          longitude: longitude !== null ? parseFloat(longitude) : null
+        })
       });
       if (!response.ok) throw new Error("Backend batch simulation failed");
       this.isOffline = false;

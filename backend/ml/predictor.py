@@ -138,14 +138,19 @@ class HeatWisePredictor:
                 "timeframe": "9-12 months"
             }
 
-    def process_city_data(self, city_name="vijayawada"):
-        # Path to city grid
-        grid_path = os.path.join(os.path.dirname(__file__), "..", "data", f"{city_name.lower()}_grid.json")
-        if not os.path.exists(grid_path):
-            generate_city_data(city_name)
-            
-        with open(grid_path, "r") as f:
-            geojson = json.load(f)
+    def process_city_data(self, city_name="vijayawada", latitude=None, longitude=None):
+        if latitude is not None and longitude is not None:
+            # Dynamic grid generation from coordinates using live weather
+            from backend.ml.data_generator import generate_live_grid
+            geojson = generate_live_grid(latitude, longitude, city_name)
+        else:
+            # Path to city grid (fallback)
+            grid_path = os.path.join(os.path.dirname(__file__), "..", "data", f"{city_name.lower()}_grid.json")
+            if not os.path.exists(grid_path):
+                generate_city_data(city_name)
+                
+            with open(grid_path, "r") as f:
+                geojson = json.load(f)
             
         if not self.is_trained:
             self.train_model()

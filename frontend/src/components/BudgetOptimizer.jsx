@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { api } from '../services/api';
 import { Coins, TrendingDown, Users, CheckCircle2, ShieldAlert, Zap } from 'lucide-react';
 
-export default function BudgetOptimizer({ onApplyPlan, onSelectZone, city = 'vijayawada' }) {
+export default function BudgetOptimizer({ onApplyPlan, onSelectZone, city = 'vijayawada', latitude = null, longitude = null }) {
   const [budgetCrore, setBudgetCrore] = useState('10');
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ export default function BudgetOptimizer({ onApplyPlan, onSelectZone, city = 'vij
     setLoading(true);
     setError(null);
     try {
-      const data = await api.optimizeBudget(budgetCrore, city);
+      const data = await api.optimizeBudget(budgetCrore, city, latitude, longitude);
       setResults(data);
     } catch (err) {
       setError("Failed to calculate budget allocation. Please try again.");

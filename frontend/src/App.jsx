@@ -47,19 +47,30 @@ export default function App() {
   const [activeRightTab, setActiveRightTab] = useState('diagnosis'); // 'diagnosis' or 'optimizer'
   const [selectedCity, setSelectedCity] = useState('vijayawada');
   
+  // Custom geocoded search states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [activeLocation, setActiveLocation] = useState({
+    name: 'Vijayawada',
+    lat: 16.5062,
+    lon: 80.6480,
+    zoom: 12
+  });
+
   // Stores batch simulation results when a budget plan is applied
   const [appliedPlanSimulations, setAppliedPlanSimulations] = useState(null); 
   const [loading, setLoading] = useState(true);
   const [isOffline, setIsOffline] = useState(false);
 
-  // Load initial city map data
+  // Load initial city map data when location coordinates change
   useEffect(() => {
     async function loadData() {
       setLoading(true);
       setSelectedZone(null);
       setSimulatedZoneData(null);
       setAppliedPlanSimulations(null);
-      const data = await api.getCityData(selectedCity);
+      const data = await api.getCityData(activeLocation.name, activeLocation.lat, activeLocation.lon);
       setGeoJsonData(data);
       setIsOffline(api.isOffline);
       
@@ -73,7 +84,72 @@ export default function App() {
       setLoading(false);
     }
     loadData();
-  }, [selectedCity]);
+  }, [activeLocation]);
+
+  // Handle geocoding queries with Open-Meteo Geocoding API
+  const handleSearchChange = async (query) => {
+    setSearchQuery(query);
+    if (query.trim().length < 3) {
+      setSearchResults([]);
+      return;
+    }
+    try {
+      const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5&language=en&format=json`);
+      if (response.ok) {
+        const data = await response.json();
+        setSearchResults(data.results || []);
+        setShowDropdown(true);
+      }
+    } catch (e) {
+      console.warn("Geocoding failed", e);
+    }
+  };
+
+  const handleSelectResult = (result) => {
+    setActiveLocation({
+      name: result.name,
+      lat: result.latitude,
+      lon: result.longitude,
+      zoom: 12,
+      country: result.country,
+      admin1: result.admin1
+    });
+    setSearchQuery(result.name);
+    setShowDropdown(false);
+    setSearchResults([]);
+    
+    // Check if the selected location matches any of our presets to sync dropdown
+    const matchedPreset = Object.entries(CITY_CONFIG).find(([key, cfg]) => 
+      cfg.label.toLowerCase() === result.name.toLowerCase()
+    );
+    if (matchedPreset) {
+      setSelectedCity(matchedPreset[0]);
+    } else {
+      setSelectedCity('custom');
+    }
+  };
+
+  const handlePresetChange = (cityName) => {
+    setSelectedCity(cityName);
+    if (cityName === 'custom') return;
+    const cfg = CITY_CONFIG[cityName];
+    if (cfg) {
+      setActiveLocation({
+        name: cfg.label,
+        lat: cfg.center[0],
+        lon: cfg.center[1],
+        zoom: cfg.zoom
+      });
+      setSearchQuery('');
+    }
+  };
+
+  // Close search dropdown on click outside
+  useEffect(() => {
+    const handleOutsideClick = () => setShowDropdown(false);
+    window.addEventListener('click', handleOutsideClick);
+    return () => window.removeEventListener('click', handleOutsideClick);
+  }, []);
 
   // Handle single zone simulator outputs
   const handleSimulationComplete = (simData) => {
@@ -111,7 +187,7 @@ export default function App() {
       };
     });
 
-    const simulatedMap = await api.simulateBatchInterventions(simulations, selectedCity);
+    const simulatedMap = await api.simulateBatchInterventions(simulations, activeLocation.name, activeLocation.lat, activeLocation.lon);
     
     setAppliedPlanSimulations(simulatedMap);
     setSimulatedZoneData(null); // Clear single simulator view
@@ -150,7 +226,7 @@ export default function App() {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', backgroundColor: '#040712', color: 'white', gap: '16px' }}>
         <div style={{ width: '48px', height: '48px', borderRadius: '50%', border: '4px solid rgba(59, 130, 246, 0.1)', borderTopColor: 'var(--primary-blue)', animation: 'spin 1s linear infinite' }}></div>
-        <h2 style={{ fontFamily: 'Outfit', fontWeight: 500, letterSpacing: '0.02em' }}>Initializing HeatWise AI Engine...</h2>
+        <h2 style={{ fontFamily: 'Outfit', fontWeight: 500, letterSpacing: '0.02em' }}>Ingesting Satellite Imagery & Live API Data...</h2>
         <style>{`
           @keyframes spin { to { transform: rotate(360deg); } }
         `}</style>
@@ -179,7 +255,7 @@ export default function App() {
           </span>
         </div>
         
-        {/* Header Badges */}
+        {/* Header Badges & Search (Geocoding integrated) */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
           {appliedPlanSimulations && (
             <div className="glass-panel glow-green animate-pulse-slow" style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(16,185,129,0.08)', fontSize: '12px', color: 'var(--primary-green)', fontWeight: 700, borderRadius: '10px' }}>
@@ -199,12 +275,74 @@ export default function App() {
               Live ML Backend
             </div>
           )}
+
+          {/* Location Search Box (Open-Meteo Geocoding) */}
+          <div className="glass-panel" style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 500, borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px', position: 'relative', width: '240px' }} onClick={(e) => e.stopPropagation()}>
+            🔍
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onFocus={() => setShowDropdown(true)}
+              placeholder={activeLocation.name || "Search location..."}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '12px',
+                fontFamily: 'inherit',
+                outline: 'none',
+                width: '100%'
+              }}
+            />
+            {showDropdown && searchResults.length > 0 && (
+              <div className="glass-panel" style={{
+                position: 'absolute',
+                top: '42px',
+                left: '0',
+                right: '0',
+                zIndex: 2000,
+                background: '#0d1117',
+                border: '1px solid var(--border-light)',
+                borderRadius: '10px',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                padding: '4px',
+                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.5)'
+              }}>
+                {searchResults.map((r) => (
+                  <div
+                    key={`${r.latitude}-${r.longitude}`}
+                    onClick={() => handleSelectResult(r)}
+                    style={{
+                      padding: '8px 12px',
+                      fontSize: '11px',
+                      color: 'white',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      transition: 'background 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                  >
+                    {r.name}, {r.admin1 ? r.admin1 + ', ' : ''}{r.country}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Quick Presets Dropdown */}
           <div className="glass-panel" style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 500, borderRadius: '10px' }}>
             📍
             <select
               id="city-selector"
               value={selectedCity}
-              onChange={(e) => setSelectedCity(e.target.value)}
+              onChange={(e) => handlePresetChange(e.target.value)}
               style={{
                 background: 'transparent',
                 border: 'none',
@@ -223,9 +361,11 @@ export default function App() {
                   {cfg.label}, {cfg.state}
                 </option>
               ))}
+              <option value="custom" style={{ background: '#0d1117', color: 'white' }} disabled>Custom Search</option>
             </select>
             <ChevronDown size={12} style={{ color: 'var(--text-secondary)', marginLeft: '-16px', pointerEvents: 'none' }} />
           </div>
+          
           <div className="glass-panel" style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 500, borderRadius: '10px' }}>
             🌡️ Mean Temp: <strong style={{ color: 'var(--primary-red)' }}>{avgTemp}°C</strong>
           </div>
@@ -325,7 +465,9 @@ export default function App() {
             {activeRightTab === 'optimizer' ? (
               <BudgetOptimizer 
                 onApplyPlan={handleApplyBudgetPlan} 
-                city={selectedCity}
+                city={activeLocation.name}
+                latitude={activeLocation.lat}
+                longitude={activeLocation.lon}
                 onSelectZone={(zoneId) => {
                   if (!geoJsonData) return;
                   const zoneFeature = geoJsonData.features.find(f => f.properties.id === zoneId);
@@ -426,7 +568,9 @@ export default function App() {
                 <div>
                   <WhatIfSimulator 
                     selectedZone={selectedZone}
-                    city={selectedCity}
+                    city={activeLocation.name}
+                    latitude={activeLocation.lat}
+                    longitude={activeLocation.lon}
                     onSimulationComplete={handleSimulationComplete}
                     onResetSimulation={handleResetSimulation}
                   />
