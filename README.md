@@ -95,48 +95,53 @@ HeatWise-AI/
 ## 🚀 Local Development Setup
 
 ### 1. Backend Setup
-1. Navigate to the root directory and create a virtual environment:
-   ```bash
-   python -m venv venv
-   source venv/Scripts/activate # On Windows: venv\Scripts\activate
-   ```
-2. Install Python packages:
-   ```bash
-   pip install -r backend/requirements.txt
-   ```
-3. Run the ML tests to generate the dataset and verify predictions:
-   ```bash
-   python backend/test_ml.py
-   ```
-4. Start the FastAPI server:
-   ```bash
-   python -m uvicorn backend.main:app --reload
-   ```
-   The backend API will be available at `http://127.0.0.1:8000` (docs at `/docs`).
+Navigate to the root directory and create a virtual environment:
+```bash
+python -m venv venv
+source venv/Scripts/activate # On Windows: venv\Scripts\activate
+```
+
+Install Python packages:
+```bash
+pip install -r backend/requirements.txt
+```
+
+Run the ML tests to generate the dataset and verify predictions:
+```bash
+python backend/test_ml.py
+```
+
+Start the FastAPI server:
+```bash
+python -m uvicorn backend.main:app --reload
+```
+The backend API will be available at `http://127.0.0.1:8000` (docs at `/docs`).
 
 ### 2. Frontend Setup
-1. Navigate to the `frontend/` directory:
-   ```bash
-   cd frontend
-   ```
-2. Install Node packages:
-   ```bash
-   npm install
-   ```
-3. Start the Vite development server:
-   ```bash
-   npm run dev
-   ```
-   Open `http://localhost:3000` in your browser. The frontend dev server is configured to proxy API requests to the backend.
+Navigate to the `frontend/` directory:
+```bash
+cd frontend
+```
+
+Install Node packages:
+```bash
+npm install
+```
+
+Start the Vite development server:
+```bash
+npm run dev
+```
+Open `http://localhost:3000` in your browser. The frontend dev server is configured to proxy API requests to the backend.
 
 ---
 
 ## 🌐 Internet Deployment Guide (Not localhost)
-
 You can easily deploy HeatWise AI to the internet for free using the following steps:
 
 ### Option A: Hugging Face Spaces (Recommended - Easiest & Free)
 Hugging Face Spaces offers free container hosting for ML projects.
+
 1. Sign up for a free account on [Hugging Face](https://huggingface.co/).
 2. Click **New Space** in the top right.
 3. Name your Space (e.g., `heatwise-ai`), select **Docker** as the SDK, and choose **Blank** template.
@@ -147,6 +152,7 @@ Hugging Face Spaces offers free container hosting for ML projects.
 
 ### Option B: Render.com (Full Web Service)
 Render is a popular platform for deploying full-stack apps.
+
 1. Create a free account on [Render](https://render.com/).
 2. Click **New +** and select **Web Service**.
 3. Connect your GitHub Repository (`https://github.com/Pagadala-Kalyan/HeatWise-AI`).
