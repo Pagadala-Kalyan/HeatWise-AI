@@ -46,7 +46,20 @@ export default function App() {
   const [simulatedZoneData, setSimulatedZoneData] = useState(null);
   const [activeRightTab, setActiveRightTab] = useState('diagnosis'); // 'diagnosis' or 'optimizer'
   const [selectedCity, setSelectedCity] = useState('vijayawada');
+  const [currentPage, setCurrentPage] = useState(0); // 0 = Explorer, 1 = Sandbox, 2 = Optimizer
   
+  // Interactive Mouse Parallax Drift for Cosmic Nebulae
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 40; // max 40px shift
+      const y = (e.clientY / window.innerHeight - 0.5) * 40;
+      document.documentElement.style.setProperty('--drift-x', `${x}px`);
+      document.documentElement.style.setProperty('--drift-y', `${y}px`);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   // Custom geocoded search states
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
@@ -285,8 +298,14 @@ export default function App() {
   const avgTemp = geoJsonData ? (geoJsonData.features.reduce((sum, f) => sum + f.properties.actual_temp, 0) / geoJsonData.features.length).toFixed(1) : 0;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', paddingBottom: '30px' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', paddingBottom: '30px', position: 'relative' }}>
       
+      {/* Background Cosmic Starry elements */}
+      <div className="star-particles"></div>
+      <div className="nebula-glow nebula-1"></div>
+      <div className="nebula-glow nebula-2"></div>
+      <div className="nebula-glow nebula-3"></div>
+
       {/* Sleek Floating Header Panel */}
       <header className="glass-panel" style={{ margin: '20px 32px 0 32px', padding: '16px 28px', display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
@@ -298,13 +317,26 @@ export default function App() {
             AI-Powered Urban Cooling Decision Engine
           </span>
         </div>
+
+        {/* Horizontal Slider Page Navigation capsule (sliding menu) */}
+        <nav className="nav-capsule">
+          <button className={`nav-link ${currentPage === 0 ? 'active' : ''}`} onClick={() => setCurrentPage(0)}>
+            🗺️ Explorer
+          </button>
+          <button className={`nav-link ${currentPage === 1 ? 'active' : ''}`} onClick={() => setCurrentPage(1)}>
+            🧪 Sandbox
+          </button>
+          <button className={`nav-link ${currentPage === 2 ? 'active' : ''}`} onClick={() => setCurrentPage(2)}>
+            💰 Optimizer
+          </button>
+        </nav>
         
         {/* Header Badges & Search (Geocoding integrated) */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center' }}>
           {appliedPlanSimulations && (
             <div className="glass-panel glow-green animate-pulse-slow" style={{ padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(16,185,129,0.08)', fontSize: '12px', color: 'var(--primary-green)', fontWeight: 700, borderRadius: '10px' }}>
               <CheckCircle size={14} />
-              Optimized Plan Simulated
+              Plan Simulated
               <RotateCcw size={12} style={{ cursor: 'pointer', marginLeft: '6px' }} onClick={handleClearPlanSimulation} title="Clear Plan Simulation" />
             </div>
           )}
@@ -321,7 +353,7 @@ export default function App() {
           )}
 
           {/* Location Search Box (Open-Meteo Geocoding) */}
-          <div className="glass-panel" style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 500, borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px', position: 'relative', width: '240px' }} onClick={(e) => e.stopPropagation()}>
+          <div className="glass-panel" style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 500, borderRadius: '10px', display: 'flex', alignItems: 'center', gap: '8px', position: 'relative', width: '220px' }} onClick={(e) => e.stopPropagation()}>
             🔍
             <input
               type="text"
@@ -386,7 +418,7 @@ export default function App() {
             className="glass-panel hover-glow" 
             title="Use My Current Location"
             style={{ 
-              padding: '8px 14px', 
+              padding: '8px 12px', 
               fontSize: '12px', 
               borderRadius: '10px', 
               display: 'flex', 
@@ -408,7 +440,7 @@ export default function App() {
               e.currentTarget.style.borderColor = 'rgba(59,130,246,0.2)';
             }}
           >
-            🎯 Locate Me
+            🎯
           </button>
 
           {/* Quick Presets Dropdown */}
@@ -433,134 +465,88 @@ export default function App() {
             >
               {Object.entries(CITY_CONFIG).map(([key, cfg]) => (
                 <option key={key} value={key} style={{ background: '#0d1117', color: 'white' }}>
-                  {cfg.label}, {cfg.state}
+                  {cfg.label}
                 </option>
               ))}
-              <option value="custom" style={{ background: '#0d1117', color: 'white' }} disabled>Custom Search</option>
+              <option value="custom" style={{ background: '#0d1117', color: 'white' }} disabled>Custom</option>
             </select>
             <ChevronDown size={12} style={{ color: 'var(--text-secondary)', marginLeft: '-16px', pointerEvents: 'none' }} />
           </div>
           
           <div className="glass-panel" style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 500, borderRadius: '10px' }}>
-            🌡️ Mean Temp: <strong style={{ color: 'var(--primary-red)' }}>{avgTemp}°C</strong>
-          </div>
-          <div className="glass-panel" style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 500, borderRadius: '10px' }}>
-            ⚠️ Hotspots: <strong style={{ color: 'var(--primary-orange)' }}>{totalAnomalies} zones</strong>
+            🌡️ <strong style={{ color: 'var(--primary-red)' }}>{avgTemp}°C</strong>
           </div>
         </div>
       </header>
 
-      {/* Main Dashboard Layout */}
-      <main className="dashboard-grid">
-        
-        {/* Left Column: Map and Global Charts (Breathing room & width) */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
-          {/* Map Card */}
-          <div className="glass-panel glow-blue" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Map Overlay Controls */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', borderBottom: '1px solid var(--border-light)', paddingBottom: '14px' }}>
-              <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <MapIcon size={16} className="grad-text-cool" /> Map Layer Overlay:
-              </span>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                <button 
-                  onClick={() => setActiveLayer('residual_heat')}
-                  className={`glass-btn ${activeLayer === 'residual_heat' ? 'primary' : ''}`}
-                  style={{ padding: '8px 14px', fontSize: '11px', borderRadius: '8px' }}
-                >
-                  <Flame size={12} /> Residual Heat (USP)
-                </button>
-                <button 
-                  onClick={() => setActiveLayer('actual_temp')}
-                  className={`glass-btn ${activeLayer === 'actual_temp' ? 'primary' : ''}`}
-                  style={{ padding: '8px 14px', fontSize: '11px', borderRadius: '8px' }}
-                >
-                  <Thermometer size={12} /> Observed Temp
-                </button>
-                <button 
-                  onClick={() => setActiveLayer('ndvi')}
-                  className={`glass-btn ${activeLayer === 'ndvi' ? 'primary' : ''}`}
-                  style={{ padding: '8px 14px', fontSize: '11px', borderRadius: '8px' }}
-                >
-                  <Leaf size={12} /> Vegetation (NDVI)
-                </button>
-                <button 
-                  onClick={() => setActiveLayer('building_density')}
-                  className={`glass-btn ${activeLayer === 'building_density' ? 'primary' : ''}`}
-                  style={{ padding: '8px 14px', fontSize: '11px', borderRadius: '8px' }}
-                >
-                  <Building2 size={12} /> Building Density
-                </button>
+      {/* Main horizontal sliding viewport */}
+      <div className="slider-viewport" style={{ marginTop: '24px' }}>
+        <div 
+          className="slider-canvas" 
+          style={{ transform: `translate3d(-${currentPage * 33.33333}%, 0, 0)` }}
+        >
+          {/* Page 0: Explorer (Map + Diagnostics Details) */}
+          <div className={`slider-page ${currentPage === 0 ? 'active' : ''}`}>
+            <div className="slider-grid explorer">
+              
+              {/* Map Card */}
+              <div className="glass-panel glow-blue" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '12px', borderBottom: '1px solid var(--border-light)', paddingBottom: '14px' }}>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <MapIcon size={16} className="grad-text-cool" /> Map Layer Overlay:
+                  </span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    <button 
+                      onClick={() => setActiveLayer('residual_heat')}
+                      className={`glass-btn ${activeLayer === 'residual_heat' ? 'primary' : ''}`}
+                      style={{ padding: '8px 14px', fontSize: '11px', borderRadius: '8px' }}
+                    >
+                      <Flame size={12} /> Residual Heat (USP)
+                    </button>
+                    <button 
+                      onClick={() => setActiveLayer('actual_temp')}
+                      className={`glass-btn ${activeLayer === 'actual_temp' ? 'primary' : ''}`}
+                      style={{ padding: '8px 14px', fontSize: '11px', borderRadius: '8px' }}
+                    >
+                      <Thermometer size={12} /> Observed Temp
+                    </button>
+                    <button 
+                      onClick={() => setActiveLayer('ndvi')}
+                      className={`glass-btn ${activeLayer === 'ndvi' ? 'primary' : ''}`}
+                      style={{ padding: '8px 14px', fontSize: '11px', borderRadius: '8px' }}
+                    >
+                      <Leaf size={12} /> Vegetation (NDVI)
+                    </button>
+                    <button 
+                      onClick={() => setActiveLayer('building_density')}
+                      className={`glass-btn ${activeLayer === 'building_density' ? 'primary' : ''}`}
+                      style={{ padding: '8px 14px', fontSize: '11px', borderRadius: '8px' }}
+                    >
+                      <Building2 size={12} /> Building Density
+                    </button>
+                  </div>
+                </div>
+
+                {/* Interactive Map Container */}
+                <div style={{ height: '440px', position: 'relative' }}>
+                  <MapView 
+                    geoJsonData={geoJsonData}
+                    selectedZone={selectedZone}
+                    onSelectZone={setSelectedZone}
+                    activeLayer={activeLayer}
+                    simulatedZoneData={simulatedZoneData}
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Interactive Map Container */}
-            <div style={{ height: '420px', position: 'relative' }}>
-              <MapView 
-                geoJsonData={geoJsonData}
-                selectedZone={selectedZone}
-                onSelectZone={setSelectedZone}
-                activeLayer={activeLayer}
-                simulatedZoneData={simulatedZoneData}
-              />
-            </div>
-          </div>
-
-          {/* Comparative Chart Card */}
-          <div style={{ minHeight: '360px' }}>
-            <MetricsChart 
-              geoJsonData={geoJsonData}
-              simulatedZoneData={simulatedZoneData}
-            />
-          </div>
-        </section>
-
-        {/* Right Column: Decisions, Simulator, and Optimizer */}
-        <section style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          
-          {/* Tab Selection Switch */}
-          <div className="tab-container">
-            <button
-              onClick={() => setActiveRightTab('diagnosis')}
-              className={`tab-btn ${activeRightTab === 'diagnosis' ? 'active' : ''}`}
-            >
-              <Compass size={14} /> Diagnosis & Simulator
-            </button>
-            <button
-              onClick={() => setActiveRightTab('optimizer')}
-              className={`tab-btn ${activeRightTab === 'optimizer' ? 'active' : ''}`}
-            >
-              <Heart size={14} /> Budget Optimizer (₹)
-            </button>
-          </div>
-
-          {/* Tab Contents */}
-          <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            {activeRightTab === 'optimizer' ? (
-              <BudgetOptimizer 
-                onApplyPlan={handleApplyBudgetPlan} 
-                city={activeLocation.name}
-                latitude={activeLocation.lat}
-                longitude={activeLocation.lon}
-                onSelectZone={(zoneId) => {
-                  if (!geoJsonData) return;
-                  const zoneFeature = geoJsonData.features.find(f => f.properties.id === zoneId);
-                  if (zoneFeature) {
-                    setSelectedZone(zoneFeature);
-                    setActiveRightTab('diagnosis');
-                  }
-                }}
-              />
-            ) : (
-              <>
-                {/* Zone Details / Diagnosis Panel */}
+              {/* Diagnosis / Details Panel */}
+              <div>
                 {selectedZone ? (
                   <div className="glass-panel glow-red animate-fade-in" style={{ padding: '24px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border-light)', paddingBottom: '12px' }}>
                       <div>
                         <span style={{ fontSize: '10px', color: 'var(--primary-blue)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.05em' }}>Zone Analysis</span>
-                        <h2 style={{ fontSize: '22px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                        <h2 style={{ fontSize: '20px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
                           {activeZoneProps.name}
                           {activeZoneProps.isSimulated && <span className="pulse-dot"></span>}
                         </h2>
@@ -568,22 +554,22 @@ export default function App() {
                       
                       {activeZoneProps.isSimulated && (
                         <div style={{ fontSize: '10px', background: 'rgba(16,185,129,0.1)', color: 'var(--primary-green)', padding: '6px 12px', borderRadius: '6px', border: '1px solid rgba(16,185,129,0.2)', fontWeight: 700 }}>
-                          Simulated Preview
+                          Simulated
                         </div>
                       )}
                     </div>
 
                     {/* Zone Metrics Cards Grid */}
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '24px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '20px' }}>
                       <div className="glass-panel" style={{ padding: '14px 10px', textAlign: 'center', background: 'rgba(255,255,255,0.01)', borderRadius: '12px' }}>
-                        <span style={{ fontSize: '9px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.02em' }}>Observed Temp</span>
-                        <h4 style={{ fontSize: '18px', fontWeight: 700, marginTop: '6px', color: activeZoneProps.actual_temp > 41 ? 'var(--primary-red)' : 'var(--text-primary)' }}>
+                        <span style={{ fontSize: '9px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.02em' }}>Observed</span>
+                        <h4 style={{ fontSize: '16px', fontWeight: 700, marginTop: '6px', color: activeZoneProps.actual_temp > 41 ? 'var(--primary-red)' : 'var(--text-primary)' }}>
                           {activeZoneProps.actual_temp}°C
                         </h4>
                       </div>
                       <div className="glass-panel" style={{ padding: '14px 10px', textAlign: 'center', background: 'rgba(255,255,255,0.01)', borderRadius: '12px' }}>
-                        <span style={{ fontSize: '9px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.02em' }}>AI Expected</span>
-                        <h4 style={{ fontSize: '18px', fontWeight: 700, marginTop: '6px', color: 'var(--primary-blue)' }}>
+                        <span style={{ fontSize: '9px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.02em' }}>Expected</span>
+                        <h4 style={{ fontSize: '16px', fontWeight: 700, marginTop: '6px', color: 'var(--primary-blue)' }}>
                           {activeZoneProps.expected_temp}°C
                         </h4>
                       </div>
@@ -595,7 +581,7 @@ export default function App() {
                         borderRadius: '12px'
                       }}>
                         <span style={{ fontSize: '9px', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.02em' }}>Residual Heat</span>
-                        <h4 style={{ fontSize: '18px', color: activeZoneProps.residual_heat > 0.5 ? 'var(--primary-red)' : 'var(--primary-green)', fontWeight: 800, marginTop: '6px' }}>
+                        <h4 style={{ fontSize: '16px', color: activeZoneProps.residual_heat > 0.5 ? 'var(--primary-red)' : 'var(--primary-green)', fontWeight: 800, marginTop: '6px' }}>
                           {activeZoneProps.residual_heat > 0 ? '+' : ''}{activeZoneProps.residual_heat}°C
                         </h4>
                       </div>
@@ -620,41 +606,108 @@ export default function App() {
                       {/* Intervention recommendation */}
                       <div className="sub-card" style={{ borderLeft: '4px solid var(--primary-blue)', background: 'rgba(59,130,246,0.015)' }}>
                         <span style={{ fontSize: '10px', color: 'var(--primary-blue)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>AI Recommended Intervention</span>
-                        <h4 style={{ fontSize: '15px', fontWeight: 700, marginTop: '4px' }}>{activeZoneProps.intervention}</h4>
+                        <h4 style={{ fontSize: '14px', fontWeight: 700, marginTop: '4px' }}>{activeZoneProps.intervention}</h4>
                         <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '6px', lineHeight: 1.5 }}>
                           {activeZoneProps.intervention_details}
                         </p>
                         
                         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: '8px', marginTop: '14px', borderTop: '1px solid var(--border-light)', paddingTop: '10px', fontSize: '11px' }}>
                           <span style={{ color: 'var(--text-secondary)' }}>Cost: <strong style={{ color: 'var(--text-primary)' }}>{activeZoneProps.cost_formatted}</strong></span>
-                          <span style={{ color: 'var(--text-secondary)' }}>Cooling ROI: <strong style={{ color: 'var(--primary-green)', fontWeight: 700 }}>-{activeZoneProps.expected_cooling}°C</strong></span>
-                          <span style={{ color: 'var(--text-secondary)' }}>Timeframe: <strong style={{ color: 'var(--text-primary)' }}>{activeZoneProps.timeframe}</strong></span>
+                          <span style={{ color: 'var(--text-secondary)' }}>ROI: <strong style={{ color: 'var(--primary-green)', fontWeight: 700 }}>-{activeZoneProps.expected_cooling}°C</strong></span>
                         </div>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="glass-panel" style={{ padding: '24px', textAlign: 'center', color: 'var(--text-dim)' }}>
-                    Select a zone on the map to inspect details.
+                  <div className="glass-panel" style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--text-dim)' }}>
+                    🗺️ Select a grid cell on the satellite map to inspect localized diagnostics.
                   </div>
                 )}
-                
-                {/* What-If Simulator section */}
-                <div>
-                  <WhatIfSimulator 
-                    selectedZone={selectedZone}
-                    city={activeLocation.name}
-                    latitude={activeLocation.lat}
-                    longitude={activeLocation.lon}
-                    onSimulationComplete={handleSimulationComplete}
-                    onResetSimulation={handleResetSimulation}
-                  />
-                </div>
-              </>
-            )}
+              </div>
+            </div>
           </div>
-        </section>
-      </main>
+
+          {/* Page 1: What-If Sandbox (Chart + Simulator) */}
+          <div className={`slider-page ${currentPage === 1 ? 'active' : ''}`}>
+            <div className="slider-grid sandbox">
+              {/* Comparative Chart Card */}
+              <div style={{ minHeight: '380px' }}>
+                <MetricsChart 
+                  geoJsonData={geoJsonData}
+                  simulatedZoneData={simulatedZoneData}
+                />
+              </div>
+
+              {/* What-If Simulator section */}
+              <div>
+                <WhatIfSimulator 
+                  selectedZone={selectedZone}
+                  city={activeLocation.name}
+                  latitude={activeLocation.lat}
+                  longitude={activeLocation.lon}
+                  onSimulationComplete={handleSimulationComplete}
+                  onResetSimulation={handleResetSimulation}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Page 2: Cooling Optimizer (Knapsack Budget Optimizer + Overview) */}
+          <div className={`slider-page ${currentPage === 2 ? 'active' : ''}`}>
+            <div className="slider-grid optimizer">
+              {/* Budget Optimizer Card */}
+              <BudgetOptimizer 
+                onApplyPlan={handleApplyBudgetPlan} 
+                city={activeLocation.name}
+                latitude={activeLocation.lat}
+                longitude={activeLocation.lon}
+                onSelectZone={(zoneId) => {
+                  if (!geoJsonData) return;
+                  const zoneFeature = geoJsonData.features.find(f => f.properties.id === zoneId);
+                  if (zoneFeature) {
+                    setSelectedZone(zoneFeature);
+                    setCurrentPage(0); // Slide back to explorer map
+                  }
+                }}
+              />
+              
+              <div className="glass-panel" style={{ padding: '24px', color: 'var(--text-secondary)', fontSize: '13px', lineHeight: 1.6 }}>
+                <h3 style={{ fontSize: '15px', color: 'white', fontWeight: 600, marginBottom: '12px' }}>💡 How It Works</h3>
+                <p style={{ marginBottom: '12px' }}>
+                  Urban cooling projects are modeled as a **0-1 Knapsack Optimization Problem**.
+                  Given a funding limit (in Crores), the decision engine selects a combination of interventions that maximizes net cooling impact across the city.
+                </p>
+                <p>
+                  Cooling ROI is calculated in **Person-Degrees of Cooling** (cooling effect in °C &times; population density &times; area). Clicking **"Simulate Entire Plan on Map"** automatically routes you back to Page 0 to display the combined thermal effects across all optimized blocks.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating Carousel Navigation Bar (Bottom) */}
+      <div className="slider-controls">
+        <button 
+          className="glass-btn" 
+          onClick={() => setCurrentPage(prev => Math.max(0, prev - 1))} 
+          disabled={currentPage === 0}
+          style={{ padding: '10px 18px', borderRadius: '12px' }}
+        >
+          ← Back
+        </button>
+        <span className="slider-indicator">
+          Page {currentPage + 1} of 3
+        </span>
+        <button 
+          className="glass-btn" 
+          onClick={() => setCurrentPage(prev => Math.min(2, prev + 1))} 
+          disabled={currentPage === 2}
+          style={{ padding: '10px 18px', borderRadius: '12px' }}
+        >
+          Next →
+        </button>
+      </div>
     </div>
   );
 }
