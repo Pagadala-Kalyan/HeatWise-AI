@@ -138,30 +138,14 @@ Open `http://localhost:3000` in your browser. The frontend dev server is configu
 
 ---
 
-## 🌐 Internet Deployment Guide (Not localhost)
-You can easily deploy HeatWise AI to the internet for free using the following steps:
+## 🌐 Live Deployment & Hosting
 
-### Option A: Hugging Face Spaces (Recommended - Easiest & Free)
-Hugging Face Spaces offers free container hosting for ML projects.
+HeatWise AI is officially hosted and running live on **Hugging Face Spaces**.
 
-1. Sign up for a free account on [Hugging Face](https://huggingface.co/).
-2. Click **New Space** in the top right.
-3. Name your Space (e.g., `heatwise-ai`), select **Docker** as the SDK, and choose **Blank** template.
-4. Set the space to **Public** and select the free CPU Basic hardware tier.
-5. Clone the space repository locally or upload your files directly to the Space's Git repository.
-6. The `Dockerfile` at the root of our project will be detected automatically. Hugging Face will build the React frontend, package it inside the FastAPI container, and serve it on port `7860`.
-7. Once build completes, the live web application is accessible at: **[https://huggingface.co/spaces/Kalyan-P/HeatWise-AI](https://huggingface.co/spaces/Kalyan-P/HeatWise-AI)**.
-
-### Option B: Render.com (Full Web Service)
-Render is a popular platform for deploying full-stack apps.
-
-1. Create a free account on [Render](https://render.com/).
-2. Click **New +** and select **Web Service**.
-3. Connect your GitHub Repository (`https://github.com/Pagadala-Kalyan/HeatWise-AI`).
-4. Set the following configurations:
-   * **Runtime**: `Docker`
-   * **Instance Type**: `Free`
-5. Click **Deploy Web Service**. Render will build the container using our root `Dockerfile` and expose it to the internet with a free `onrender.com` SSL domain.
+### ⚡ Hugging Face Spaces (Official Deployment)
+The application is automatically built and served using a multi-stage Docker build configured in our root `Dockerfile`. 
+* **Live Deployment URL**: **[https://huggingface.co/spaces/Kalyan-P/HeatWise-AI](https://huggingface.co/spaces/Kalyan-P/HeatWise-AI)**
+* **Platform**: Hugging Face Spaces (Docker SDK container environment, exposing Uvicorn FastAPI backend and React static frontend assets).
 
 ---
 
