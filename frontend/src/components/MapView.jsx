@@ -77,11 +77,10 @@ export default function MapView({
 
     return {
       fillColor: color,
-      weight: isSelected ? 3 : 1,
+      weight: isSelected ? 2 : 0,
       opacity: 1,
-      color: isSelected ? '#3B82F6' : 'rgba(255,255,255,0.15)',
-      dashArray: isSelected ? '0' : '3',
-      fillOpacity: isSelected ? 0.8 : fillOpacity
+      color: isSelected ? '#ffffff' : 'transparent',
+      fillOpacity: isSelected ? 0.85 : fillOpacity
     };
   };
 

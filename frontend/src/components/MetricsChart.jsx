@@ -14,7 +14,11 @@ export default function MetricsChart({ geoJsonData, simulatedZoneData }) {
     );
   }
 
-  const features = geoJsonData.features;
+  // Display only the top 12 hotspot zones sorted by residual heat
+  const features = [...geoJsonData.features]
+    .sort((a, b) => b.properties.residual_heat - a.properties.residual_heat)
+    .slice(0, 12);
+  
   const labels = features.map(f => f.properties.name);
   
   // Use simulated temperature if we have active simulated zone data

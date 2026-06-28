@@ -482,71 +482,77 @@ def generate_live_grid(lat: float, lon: float, city_name="Live Location"):
     # Fetch live base temp
     base_temp = get_live_temperature(lat, lon)
     
-    # 12 zones surrounding the center point (lat, lon)
-    # Using offsets to distribute them in a grid pattern
-    zone_offsets = [
-        {"id": 1, "name": "City Center", "lat_off": 0.0, "lon_off": 0.0, "ndvi": 0.12, "density": 0.90, "albedo": 0.12, "pop": 22000, "area": 1.5},
-        {"id": 2, "name": "North District", "lat_off": 0.015, "lon_off": 0.0, "ndvi": 0.28, "density": 0.65, "albedo": 0.15, "pop": 16000, "area": 1.8},
-        {"id": 3, "name": "North-East Sector", "lat_off": 0.011, "lon_off": 0.011, "ndvi": 0.35, "density": 0.50, "albedo": 0.18, "pop": 8000, "area": 3.2},
-        {"id": 4, "name": "East Zone", "lat_off": 0.0, "lon_off": 0.015, "ndvi": 0.22, "density": 0.75, "albedo": 0.13, "pop": 19000, "area": 2.0},
-        {"id": 5, "name": "South-East Sector", "lat_off": -0.011, "lon_off": 0.011, "ndvi": 0.40, "density": 0.45, "albedo": 0.19, "pop": 7500, "area": 3.5},
-        {"id": 6, "name": "South District", "lat_off": -0.015, "lon_off": 0.0, "ndvi": 0.30, "density": 0.55, "albedo": 0.16, "pop": 11000, "area": 2.2},
-        {"id": 7, "name": "South-West Sector", "lat_off": -0.011, "lon_off": -0.011, "ndvi": 0.48, "density": 0.35, "albedo": 0.21, "pop": 5000, "area": 4.0},
-        {"id": 8, "name": "West Zone", "lat_off": 0.0, "lon_off": -0.015, "ndvi": 0.18, "density": 0.82, "albedo": 0.14, "pop": 17500, "area": 2.1},
-        {"id": 9, "name": "North-West Sector", "lat_off": 0.011, "lon_off": -0.011, "ndvi": 0.25, "density": 0.70, "albedo": 0.16, "pop": 14000, "area": 2.4},
-        {"id": 10, "name": "Inner Ring Road", "lat_off": 0.007, "lon_off": -0.007, "ndvi": 0.15, "density": 0.85, "albedo": 0.12, "pop": 20500, "area": 1.7},
-        {"id": 11, "name": "Industrial Suburb", "lat_off": -0.007, "lon_off": 0.007, "ndvi": 0.08, "density": 0.90, "albedo": 0.10, "pop": 23000, "area": 2.3},
-        {"id": 12, "name": "Riverside Extension", "lat_off": -0.007, "lon_off": -0.007, "ndvi": 0.32, "density": 0.60, "albedo": 0.15, "pop": 12500, "area": 2.8}
-    ]
-    
     offset = 0.0075
+    step = 0.015
     features = []
     
     # Seeding to ensure consistent random deviations for the same lat/lon values
     seed_val = int(abs(lat * 1000 + lon * 1000)) % 10000
     np.random.seed(seed_val)
     
-    for z in zone_offsets:
-        z_lat = lat + z["lat_off"]
-        z_lon = lon + z["lon_off"]
-        
-        # Calculate temperature offset relative to density, ndvi, and albedo
-        # T_var = 3.5 * density - 4.5 * ndvi - 2.0 * albedo + noise
-        density = z["density"]
-        ndvi = z["ndvi"]
-        albedo = z["albedo"]
-        
-        t_var = 3.5 * density - 4.5 * ndvi - 2.0 * albedo
-        noise = np.random.normal(0, 0.2)
-        actual_temp = round(base_temp + t_var + noise, 1)
-        
-        poly_coords = [
-            [z_lon - offset, z_lat - offset],
-            [z_lon + offset, z_lat - offset],
-            [z_lon + offset, z_lat + offset],
-            [z_lon - offset, z_lat + offset],
-            [z_lon - offset, z_lat - offset]
-        ]
-        
-        feature = {
-            "type": "Feature",
-            "properties": {
-                "id": z["id"],
-                "name": z["name"],
-                "ndvi": ndvi,
-                "building_density": density,
-                "albedo": albedo,
-                "actual_temp": actual_temp,
-                "population_density": z["pop"],
-                "area_sq_km": z["area"]
-            },
-            "geometry": {
-                "type": "Polygon",
-                "coordinates": [poly_coords]
+    zone_id = 1
+    # Generate 7x7 seamless tiled grid of 49 cells
+    for i in range(7):
+        for j in range(7):
+            lat_off = (i - 3) * step
+            lon_off = (j - 3) * step
+            
+            z_lat = lat + lat_off
+            z_lon = lon + lon_off
+            
+            # Urban Heat Island distance-based microclimate properties
+            # Distance from center cell (3,3)
+            dist = np.sqrt((i - 3)**2 + (j - 3)**2)
+            
+            # Center is denser, hotter, and has less vegetation
+            density = max(0.20, min(0.95, 0.90 - 0.12 * dist + np.random.uniform(-0.05, 0.05)))
+            ndvi = max(0.08, min(0.65, 0.12 + 0.08 * dist + np.random.uniform(-0.04, 0.04)))
+            albedo = max(0.09, min(0.24, 0.11 + 0.02 * dist + np.random.uniform(-0.02, 0.02)))
+            pop = int(max(1500, min(35000, 25000 - 4500 * dist + np.random.randint(-1000, 1000))))
+            area = round(1.5 + 0.5 * dist, 1)
+            
+            # Dynamic naming based on sector coordinate
+            sector_name = f"Zone {chr(65 + i)}{j + 1}"
+            if i == 3 and j == 3:
+                sector_name = "City Core Center"
+            elif dist < 1.5:
+                sector_name = f"Inner City Sector {chr(65 + i)}{j + 1}"
+            elif dist > 3.0:
+                sector_name = f"Suburban Sector {chr(65 + i)}{j + 1}"
+                
+            # Base temperature + UHI effect
+            t_var = 4.0 * density - 5.0 * ndvi - 2.5 * albedo
+            noise = np.random.normal(0, 0.15)
+            actual_temp = round(base_temp + t_var + noise, 1)
+            
+            poly_coords = [
+                [z_lon - offset, z_lat - offset],
+                [z_lon + offset, z_lat - offset],
+                [z_lon + offset, z_lat + offset],
+                [z_lon - offset, z_lat + offset],
+                [z_lon - offset, z_lat - offset]
+            ]
+            
+            feature = {
+                "type": "Feature",
+                "properties": {
+                    "id": zone_id,
+                    "name": sector_name,
+                    "ndvi": round(ndvi, 3),
+                    "building_density": round(density, 3),
+                    "albedo": round(albedo, 3),
+                    "actual_temp": actual_temp,
+                    "population_density": pop,
+                    "area_sq_km": area
+                },
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [poly_coords]
+                }
             }
-        }
-        features.append(feature)
-        
+            features.append(feature)
+            zone_id += 1
+            
     return {
         "type": "FeatureCollection",
         "features": features

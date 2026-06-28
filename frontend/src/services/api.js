@@ -183,30 +183,57 @@ async function fetchLiveTempOffline(lat, lon) {
 }
 
 function buildCustomMockDataset(city, lat, lon, baseTemp) {
-  const zoneOffsets = [
-    { id: 1, name: "City Center", lat_off: 0.0, lon_off: 0.0, ndvi: 0.12, density: 0.90, albedo: 0.12, population_density: 22000, area_sq_km: 1.5 },
-    { id: 2, name: "North District", lat_off: 0.015, lon_off: 0.0, ndvi: 0.28, density: 0.65, albedo: 0.15, population_density: 16000, area_sq_km: 1.8 },
-    { id: 3, name: "North-East Sector", lat_off: 0.011, lon_off: 0.011, ndvi: 0.35, density: 0.50, albedo: 0.18, population_density: 8000, area_sq_km: 3.2 },
-    { id: 4, name: "East Zone", lat_off: 0.0, lon_off: 0.015, ndvi: 0.22, density: 0.75, albedo: 0.13, population_density: 19000, area_sq_km: 2.0 },
-    { id: 5, name: "South-East Sector", lat_off: -0.011, lon_off: 0.011, ndvi: 0.40, density: 0.45, albedo: 0.19, population_density: 7500, area_sq_km: 3.5 },
-    { id: 6, name: "South District", lat_off: -0.015, lon_off: 0.0, ndvi: 0.30, density: 0.55, albedo: 0.16, population_density: 11000, area_sq_km: 2.2 },
-    { id: 7, name: "South-West Sector", lat_off: -0.011, lon_off: -0.011, ndvi: 0.48, density: 0.35, albedo: 0.21, population_density: 5000, area_sq_km: 4.0 },
-    { id: 8, name: "West Zone", lat_off: 0.0, lon_off: -0.015, ndvi: 0.18, density: 0.82, albedo: 0.14, population_density: 17500, area_sq_km: 2.1 },
-    { id: 9, name: "North-West Sector", lat_off: 0.011, lon_off: -0.011, ndvi: 0.25, density: 0.70, albedo: 0.16, population_density: 14000, area_sq_km: 2.4 },
-    { id: 10, name: "Inner Ring Road", lat_off: 0.007, lon_off: -0.007, ndvi: 0.15, density: 0.85, albedo: 0.12, population_density: 20500, area_sq_km: 1.7 },
-    { id: 11, name: "Industrial Suburb", lat_off: -0.007, lon_off: 0.007, ndvi: 0.08, density: 0.90, albedo: 0.10, population_density: 23000, area_sq_km: 2.3 },
-    { id: 12, name: "Riverside Extension", lat_off: -0.007, lon_off: -0.007, ndvi: 0.32, density: 0.60, albedo: 0.15, population_density: 12500, area_sq_km: 2.8 }
-  ];
+  const step = 0.015;
+  const zones = [];
+  let zone_id = 1;
 
-  const zones = zoneOffsets.map(z => {
-    const t_var = 3.5 * z.density - 4.5 * z.ndvi - 2.0 * z.albedo;
-    const actual_temp = parseFloat((baseTemp + t_var).toFixed(1));
-    return {
-      ...z,
-      center: [lat + z.lat_off, lon + z.lon_off],
-      actual_temp
-    };
-  });
+  for (let i = 0; i < 7; i++) {
+    for (let j = 0; j < 7; j++) {
+      const lat_off = (i - 3) * step;
+      const lon_off = (j - 3) * step;
+      
+      const dist = Math.sqrt(Math.pow(i - 3, 2) + Math.pow(j - 3, 2));
+      
+      // Simple pseudo-random generator seeded by lat, lon, and cell indices
+      const seed = Math.sin(lat * 10 + lon * 20 + i * 30 + j * 40) * 10000;
+      const rand = () => {
+        const x = Math.sin(seed + zone_id) * 10000;
+        return x - Math.floor(x);
+      };
+
+      const density = Math.max(0.20, Math.min(0.95, 0.90 - 0.12 * dist + (rand() * 0.1 - 0.05)));
+      const ndvi = Math.max(0.08, Math.min(0.65, 0.12 + 0.08 * dist + (rand() * 0.08 - 0.04)));
+      const albedo = Math.max(0.09, Math.min(0.24, 0.11 + 0.02 * dist + (rand() * 0.04 - 0.02)));
+      const pop = Math.floor(Math.max(1500, Math.min(35000, 25000 - 4500 * dist + (rand() * 2000 - 1000))));
+      const area = parseFloat((1.5 + 0.5 * dist).toFixed(1));
+
+      let name = `Zone ${String.fromCharCode(65 + i)}${j + 1}`;
+      if (i === 3 && j === 3) {
+        name = "City Core Center";
+      } else if (dist < 1.5) {
+        name = `Inner City Sector ${String.fromCharCode(65 + i)}${j + 1}`;
+      } else if (dist > 3.0) {
+        name = `Suburban Sector ${String.fromCharCode(65 + i)}${j + 1}`;
+      }
+
+      const t_var = 4.0 * density - 5.0 * ndvi - 2.5 * albedo;
+      const noise = rand() * 0.3 - 0.15;
+      const actual_temp = parseFloat((baseTemp + t_var + noise).toFixed(1));
+
+      zones.push({
+        id: zone_id,
+        name,
+        center: [lat + lat_off, lon + lon_off],
+        ndvi,
+        density,
+        albedo,
+        actual_temp,
+        population_density: pop,
+        area_sq_km: area
+      });
+      zone_id++;
+    }
+  }
 
   return buildCityGeoJSON(zones);
 }

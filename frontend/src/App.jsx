@@ -144,6 +144,50 @@ export default function App() {
     }
   };
 
+  const handleLocateUser = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+    
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        let locationName = "My Location";
+        
+        try {
+          // Attempt reverse geocoding to find the city name
+          const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+          if (response.ok) {
+            const data = await response.json();
+            locationName = data.city || data.locality || data.principalSubdivision || "My Location";
+          }
+        } catch (err) {
+          console.warn("Reverse geocoding failed, using coordinates name", err);
+        }
+        
+        setActiveLocation({
+          name: locationName,
+          lat: latitude,
+          lon: longitude,
+          zoom: 12
+        });
+        setSearchQuery(locationName);
+        setSelectedCity('custom');
+      },
+      (error) => {
+        setLoading(false);
+        let errorMsg = "Unable to retrieve your location.";
+        if (error.code === 1) {
+          errorMsg = "Location access was denied. Please enable location permissions in your browser.";
+        }
+        alert(errorMsg);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   // Close search dropdown on click outside
   useEffect(() => {
     const handleOutsideClick = () => setShowDropdown(false);
@@ -335,6 +379,37 @@ export default function App() {
               </div>
             )}
           </div>
+
+          {/* Locate Me Button */}
+          <button 
+            onClick={handleLocateUser} 
+            className="glass-panel hover-glow" 
+            title="Use My Current Location"
+            style={{ 
+              padding: '8px 14px', 
+              fontSize: '12px', 
+              borderRadius: '10px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              background: 'rgba(59,130,246,0.06)',
+              border: '1px solid rgba(59,130,246,0.2)',
+              cursor: 'pointer',
+              color: 'var(--primary-blue)',
+              fontWeight: '700',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(59,130,246,0.15)';
+              e.currentTarget.style.borderColor = 'rgba(59,130,246,0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(59,130,246,0.06)';
+              e.currentTarget.style.borderColor = 'rgba(59,130,246,0.2)';
+            }}
+          >
+            🎯 Locate Me
+          </button>
 
           {/* Quick Presets Dropdown */}
           <div className="glass-panel" style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 500, borderRadius: '10px' }}>
