@@ -289,38 +289,38 @@ input[type=range].slider-green::-webkit-slider-thumb:hover {
 
 /* Leaflet Layout Corrections */
 .leaflet-container {
-  background: #090e1a !important;
+  background: var(--bg-dark) !important;
   border-radius: 16px;
   font-family: 'Inter', sans-serif;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
 }
 
 .leaflet-bar {
   border: 1px solid var(--border-light) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
 .leaflet-bar a {
-  background-color: #111827 !important;
+  background-color: var(--bg-card) !important;
   color: var(--text-primary) !important;
   border-bottom: 1px solid var(--border-light) !important;
 }
 
 .leaflet-bar a:hover {
-  background-color: #1f2937 !important;
+  background-color: var(--bg-card-hover) !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background: rgba(9, 13, 26, 0.92) !important;
+  background: var(--bg-card) !important;
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-light) !important;
   color: var(--text-primary) !important;
   border-radius: 12px !important;
 }
 
 .leaflet-popup-tip {
-  background: rgba(9, 13, 26, 0.92) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--bg-card) !important;
+  border: 1px solid var(--border-light) !important;
 }
 
 /* Gradients */
