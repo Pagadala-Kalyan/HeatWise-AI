@@ -3,7 +3,7 @@ import pandas as pd
 import json
 import os
 from sklearn.ensemble import RandomForestRegressor
-from backend.ml.data_generator import generate_vijayawada_data
+from backend.ml.data_generator import generate_city_data
 
 class HeatWisePredictor:
     def __init__(self):
@@ -138,11 +138,11 @@ class HeatWisePredictor:
                 "timeframe": "9-12 months"
             }
 
-    def process_city_data(self):
+    def process_city_data(self, city_name="vijayawada"):
         # Path to city grid
-        grid_path = os.path.join(os.path.dirname(__file__), "..", "data", "vijayawada_grid.json")
+        grid_path = os.path.join(os.path.dirname(__file__), "..", "data", f"{city_name.lower()}_grid.json")
         if not os.path.exists(grid_path):
-            generate_vijayawada_data()
+            generate_city_data(city_name)
             
         with open(grid_path, "r") as f:
             geojson = json.load(f)

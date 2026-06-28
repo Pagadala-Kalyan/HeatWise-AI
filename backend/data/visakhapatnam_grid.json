@@ -1,0 +1,485 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 1,
+        "name": "Jagadamba Centre",
+        "ndvi": 0.1,
+        "building_density": 0.9,
+        "albedo": 0.11,
+        "actual_temp": 43.8,
+        "population_density": 21000,
+        "area_sq_km": 1.5
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              83.293,
+              17.7046
+            ],
+            [
+              83.30799999999999,
+              17.7046
+            ],
+            [
+              83.30799999999999,
+              17.7196
+            ],
+            [
+              83.293,
+              17.7196
+            ],
+            [
+              83.293,
+              17.7046
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 2,
+        "name": "MVP Colony",
+        "ndvi": 0.35,
+        "building_density": 0.6,
+        "albedo": 0.16,
+        "actual_temp": 39.5,
+        "population_density": 12500,
+        "area_sq_km": 2.8
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              83.32300000000001,
+              17.735599999999998
+            ],
+            [
+              83.338,
+              17.735599999999998
+            ],
+            [
+              83.338,
+              17.7506
+            ],
+            [
+              83.32300000000001,
+              17.7506
+            ],
+            [
+              83.32300000000001,
+              17.735599999999998
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 3,
+        "name": "Gajuwaka",
+        "ndvi": 0.12,
+        "building_density": 0.88,
+        "albedo": 0.12,
+        "actual_temp": 44.5,
+        "population_density": 18000,
+        "area_sq_km": 3.5
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              83.20100000000001,
+              17.6833
+            ],
+            [
+              83.216,
+              17.6833
+            ],
+            [
+              83.216,
+              17.6983
+            ],
+            [
+              83.20100000000001,
+              17.6983
+            ],
+            [
+              83.20100000000001,
+              17.6833
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 4,
+        "name": "Madhurawada",
+        "ndvi": 0.45,
+        "building_density": 0.38,
+        "albedo": 0.2,
+        "actual_temp": 37.0,
+        "population_density": 6500,
+        "area_sq_km": 5.0
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              83.34100000000001,
+              17.811
+            ],
+            [
+              83.356,
+              17.811
+            ],
+            [
+              83.356,
+              17.826
+            ],
+            [
+              83.34100000000001,
+              17.826
+            ],
+            [
+              83.34100000000001,
+              17.811
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 5,
+        "name": "Rushikonda",
+        "ndvi": 0.55,
+        "building_density": 0.25,
+        "albedo": 0.22,
+        "actual_temp": 35.8,
+        "population_density": 3000,
+        "area_sq_km": 4.5
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              83.37100000000001,
+              17.774
+            ],
+            [
+              83.386,
+              17.774
+            ],
+            [
+              83.386,
+              17.789
+            ],
+            [
+              83.37100000000001,
+              17.789
+            ],
+            [
+              83.37100000000001,
+              17.774
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 6,
+        "name": "Seethammadhara",
+        "ndvi": 0.32,
+        "building_density": 0.65,
+        "albedo": 0.15,
+        "actual_temp": 40.1,
+        "population_density": 11000,
+        "area_sq_km": 2.2
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              83.299,
+              17.7296
+            ],
+            [
+              83.314,
+              17.7296
+            ],
+            [
+              83.314,
+              17.744600000000002
+            ],
+            [
+              83.299,
+              17.744600000000002
+            ],
+            [
+              83.299,
+              17.7296
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 7,
+        "name": "Dwaraka Nagar",
+        "ndvi": 0.15,
+        "building_density": 0.86,
+        "albedo": 0.12,
+        "actual_temp": 43.0,
+        "population_density": 17000,
+        "area_sq_km": 1.7
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              83.293,
+              17.719
+            ],
+            [
+              83.30799999999999,
+              17.719
+            ],
+            [
+              83.30799999999999,
+              17.734
+            ],
+            [
+              83.293,
+              17.734
+            ],
+            [
+              83.293,
+              17.719
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 8,
+        "name": "Kurmannapalem",
+        "ndvi": 0.2,
+        "building_density": 0.72,
+        "albedo": 0.14,
+        "actual_temp": 42.5,
+        "population_density": 9500,
+        "area_sq_km": 4.0
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              83.14800000000001,
+              17.666999999999998
+            ],
+            [
+              83.163,
+              17.666999999999998
+            ],
+            [
+              83.163,
+              17.682
+            ],
+            [
+              83.14800000000001,
+              17.682
+            ],
+            [
+              83.14800000000001,
+              17.666999999999998
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 9,
+        "name": "Gopalapatnam",
+        "ndvi": 0.22,
+        "building_density": 0.78,
+        "albedo": 0.13,
+        "actual_temp": 41.8,
+        "population_density": 15000,
+        "area_sq_km": 2.4
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              83.221,
+              17.751
+            ],
+            [
+              83.23599999999999,
+              17.751
+            ],
+            [
+              83.23599999999999,
+              17.766000000000002
+            ],
+            [
+              83.221,
+              17.766000000000002
+            ],
+            [
+              83.221,
+              17.751
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 10,
+        "name": "Pendurthi",
+        "ndvi": 0.38,
+        "building_density": 0.42,
+        "albedo": 0.17,
+        "actual_temp": 38.0,
+        "population_density": 5500,
+        "area_sq_km": 4.8
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              83.191,
+              17.791
+            ],
+            [
+              83.20599999999999,
+              17.791
+            ],
+            [
+              83.20599999999999,
+              17.806
+            ],
+            [
+              83.191,
+              17.806
+            ],
+            [
+              83.191,
+              17.791
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 11,
+        "name": "Anakapalle",
+        "ndvi": 0.3,
+        "building_density": 0.7,
+        "albedo": 0.15,
+        "actual_temp": 41.0,
+        "population_density": 8000,
+        "area_sq_km": 3.6
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              82.99600000000001,
+              17.684
+            ],
+            [
+              83.011,
+              17.684
+            ],
+            [
+              83.011,
+              17.699
+            ],
+            [
+              82.99600000000001,
+              17.699
+            ],
+            [
+              82.99600000000001,
+              17.684
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 12,
+        "name": "Bheemunipatnam",
+        "ndvi": 0.48,
+        "building_density": 0.3,
+        "albedo": 0.19,
+        "actual_temp": 36.2,
+        "population_density": 4000,
+        "area_sq_km": 4.2
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              83.441,
+              17.881
+            ],
+            [
+              83.45599999999999,
+              17.881
+            ],
+            [
+              83.45599999999999,
+              17.896
+            ],
+            [
+              83.441,
+              17.896
+            ],
+            [
+              83.441,
+              17.881
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
