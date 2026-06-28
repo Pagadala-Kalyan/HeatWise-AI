@@ -307,16 +307,18 @@ export default function App() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', paddingBottom: '30px', position: 'relative' }}>
       
       {/* Background Cyber-Holographic and Cosmic elements */}
-      <div className="star-particles"></div>
-      <div className="cyber-grid"></div>
-      <div className="aurora-container">
+      <div className="star-particles" style={{ zIndex: 1 }}></div>
+      <div className="cyber-grid" style={{ zIndex: 1 }}></div>
+      <div className="aurora-container" style={{ zIndex: 1 }}>
         <div className="aurora-beam"></div>
         <div className="aurora-beam"></div>
         <div className="aurora-beam"></div>
       </div>
 
-      {/* Sleek Floating Header Panel */}
-      <header className="glass-panel" style={{ margin: '20px 32px 0 32px', padding: '16px 28px', display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Foreground Content Wrapper */}
+      <div style={{ position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', width: '100%' }}>
+        {/* Sleek Floating Header Panel */}
+        <header className="glass-panel" style={{ margin: '20px 32px 0 32px', padding: '16px 28px', display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '24px', fontWeight: 800 }}>
             <span style={{ fontSize: '28px', filter: 'drop-shadow(0 0 10px rgba(59,130,246,0.3))' }}>❄️</span>
@@ -729,6 +731,7 @@ export default function App() {
           Next →
         </button>
       </div>
+      </div> {/* Closing the foreground wrapper */}
     </div>
   );
 }

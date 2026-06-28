@@ -478,8 +478,8 @@ input[type=range].slider-green::-webkit-slider-thumb:hover {
   right: 0;
   bottom: 0;
   background-image: 
-    linear-gradient(rgba(0, 242, 254, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 242, 254, 0.02) 1px, transparent 1px);
+    linear-gradient(rgba(0, 242, 254, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 242, 254, 0.05) 1px, transparent 1px);
   background-size: 45px 45px;
   pointer-events: none;
   z-index: -3;
@@ -502,7 +502,7 @@ input[type=range].slider-green::-webkit-slider-thumb:hover {
   bottom: -250px;
   width: 250px;
   height: 90%;
-  background: linear-gradient(to top, rgba(0, 242, 254, 0.09), rgba(0, 242, 254, 0.03) 50%, transparent);
+  background: linear-gradient(to top, rgba(0, 242, 254, 0.18), rgba(0, 242, 254, 0.06) 50%, transparent);
   filter: blur(90px);
   transform-origin: bottom center;
   animation: aurora-sway 18s infinite ease-in-out;
@@ -512,7 +512,7 @@ input[type=range].slider-green::-webkit-slider-thumb:hover {
 .aurora-beam:nth-child(2) {
   left: 45%;
   width: 320px;
-  background: linear-gradient(to top, rgba(245, 158, 11, 0.06), rgba(245, 158, 11, 0.02) 40%, transparent);
+  background: linear-gradient(to top, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.04) 40%, transparent);
   animation-duration: 25s;
   animation-delay: -4s;
 }
@@ -520,7 +520,7 @@ input[type=range].slider-green::-webkit-slider-thumb:hover {
 .aurora-beam:nth-child(3) {
   right: 15%;
   width: 280px;
-  background: linear-gradient(to top, rgba(217, 70, 239, 0.07), rgba(217, 70, 239, 0.02) 60%, transparent);
+  background: linear-gradient(to top, rgba(217, 70, 239, 0.14), rgba(217, 70, 239, 0.04) 60%, transparent);
   animation-duration: 20s;
   animation-delay: -8s;
 }
@@ -763,21 +763,21 @@ option {
 
 [data-theme="light"] .cyber-grid {
   background-image: 
-    linear-gradient(rgba(15, 23, 42, 0.015) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15, 23, 42, 0.015) 1px, transparent 1px);
+    linear-gradient(rgba(15, 23, 42, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
   opacity: 0.8;
 }
 
 [data-theme="light"] .aurora-beam {
-  opacity: 0.03;
+  opacity: 0.06;
 }
 
 /* Cyber Blueprint Map filters matching the world map hologram look */
-.leaflet-tile-pane {
+.leaflet-tile {
   filter: sepia(1) hue-rotate(155deg) saturate(3.2) brightness(0.62) contrast(1.35) !important;
 }
 
-[data-theme="light"] .leaflet-tile-pane {
+[data-theme="light"] .leaflet-tile {
   filter: sepia(0.8) hue-rotate(155deg) saturate(1.8) brightness(1.05) contrast(0.95) !important;
 }
 
