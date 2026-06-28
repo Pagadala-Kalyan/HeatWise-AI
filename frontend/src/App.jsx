@@ -306,11 +306,14 @@ export default function App() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', paddingBottom: '30px', position: 'relative' }}>
       
-      {/* Background Cosmic Starry elements */}
+      {/* Background Cyber-Holographic and Cosmic elements */}
       <div className="star-particles"></div>
-      <div className="nebula-glow nebula-1"></div>
-      <div className="nebula-glow nebula-2"></div>
-      <div className="nebula-glow nebula-3"></div>
+      <div className="cyber-grid"></div>
+      <div className="aurora-container">
+        <div className="aurora-beam"></div>
+        <div className="aurora-beam"></div>
+        <div className="aurora-beam"></div>
+      </div>
 
       {/* Sleek Floating Header Panel */}
       <header className="glass-panel" style={{ margin: '20px 32px 0 32px', padding: '16px 28px', display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
