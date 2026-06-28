@@ -337,7 +337,8 @@ async function buildCustomMockDataset(city, lat, lon, baseTemp) {
 
     if (poly.length === 0) continue;
 
-    poly = smoothPolygon(poly, 1);
+    // Smooth the polygon vertices (set to 0 to prevent corner gaps)
+    poly = smoothPolygon(poly, 0);
 
     const dist = Math.sqrt(Math.pow(s.lat - lat, 2) + Math.pow(s.lon - lon, 2)) / 0.015;
     const seed = Math.sin(s.lat * 12 + s.lon * 24) * 10000;

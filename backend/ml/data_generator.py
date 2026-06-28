@@ -642,8 +642,8 @@ def generate_live_grid(lat: float, lon: float, city_name="Live Location"):
         if not poly:
             continue
             
-        # Smooth the polygon vertices using Chaikin's algorithm for curved boundaries
-        poly = smooth_polygon_py(poly, iterations=1)
+        # Smooth the polygon vertices using Chaikin's algorithm (set to 0 to prevent corner gaps)
+        poly = smooth_polygon_py(poly, iterations=0)
         
         # Distance from center
         dist = np.sqrt((s["lat"] - lat)**2 + (s["lon"] - lon)**2) / 0.015
