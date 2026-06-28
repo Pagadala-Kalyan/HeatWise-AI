@@ -715,6 +715,15 @@ input[type=range].slider-green::-webkit-slider-thumb:hover {
   background: rgba(15, 23, 42, 0.04);
 }
 
+select {
+  color: var(--text-primary) !important;
+}
+
+option {
+  background: #0d1117 !important;
+  color: #f8fafc !important;
+}
+
 [data-theme="light"] select {
   color: var(--text-primary) !important;
 }
