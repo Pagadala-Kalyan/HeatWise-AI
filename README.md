@@ -11,6 +11,8 @@ pinned: false
 
 > **"Helping cities spend every cooling dollar where it delivers the maximum impact."**
 
+🌍 **Live Demo**: **[https://huggingface.co/spaces/Kalyan-P/HeatWise-AI](https://huggingface.co/spaces/Kalyan-P/HeatWise-AI)**
+
 ---
 
 ## 🛰️ Project Overview
@@ -148,7 +150,7 @@ Hugging Face Spaces offers free container hosting for ML projects.
 4. Set the space to **Public** and select the free CPU Basic hardware tier.
 5. Clone the space repository locally or upload your files directly to the Space's Git repository.
 6. The `Dockerfile` at the root of our project will be detected automatically. Hugging Face will build the React frontend, package it inside the FastAPI container, and serve it on port `7860`.
-7. Once build completes, your live web application will be accessible at: `https://huggingface.co/spaces/YOUR_USERNAME/YOUR_SPACE_NAME`.
+7. Once build completes, the live web application is accessible at: **[https://huggingface.co/spaces/Kalyan-P/HeatWise-AI](https://huggingface.co/spaces/Kalyan-P/HeatWise-AI)**.
 
 ### Option B: Render.com (Full Web Service)
 Render is a popular platform for deploying full-stack apps.
