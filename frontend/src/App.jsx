@@ -370,7 +370,7 @@ export default function App() {
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: 'white',
+                color: 'var(--text-primary)',
                 fontWeight: 600,
                 fontSize: '12px',
                 fontFamily: 'inherit',
@@ -385,13 +385,13 @@ export default function App() {
                 left: '0',
                 right: '0',
                 zIndex: 2000,
-                background: '#0d1117',
+                background: 'var(--bg-card)',
                 border: '1px solid var(--border-light)',
                 borderRadius: '10px',
                 maxHeight: '200px',
                 overflowY: 'auto',
                 padding: '4px',
-                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.5)'
+                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.15)'
               }}>
                 {searchResults.map((r) => (
                   <div
@@ -400,7 +400,7 @@ export default function App() {
                     style={{
                       padding: '8px 12px',
                       fontSize: '11px',
-                      color: 'white',
+                      color: 'var(--text-primary)',
                       borderRadius: '6px',
                       cursor: 'pointer',
                       whiteSpace: 'nowrap',
@@ -408,7 +408,7 @@ export default function App() {
                       textOverflow: 'ellipsis',
                       transition: 'background 0.2s'
                     }}
-                    onMouseEnter={(e) => e.target.style.backgroundColor = 'rgba(255,255,255,0.05)'}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = 'var(--border-light)'}
                     onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
                   >
                     {r.name}, {r.admin1 ? r.admin1 + ', ' : ''}{r.country}
@@ -459,7 +459,7 @@ export default function App() {
               style={{
                 background: 'transparent',
                 border: 'none',
-                color: 'white',
+                color: 'var(--text-primary)',
                 fontWeight: 700,
                 fontSize: '12px',
                 fontFamily: 'Outfit, sans-serif',
@@ -470,11 +470,11 @@ export default function App() {
               }}
             >
               {Object.entries(CITY_CONFIG).map(([key, cfg]) => (
-                <option key={key} value={key} style={{ background: '#0d1117', color: 'white' }}>
+                <option key={key} value={key}>
                   {cfg.label}
                 </option>
               ))}
-              <option value="custom" style={{ background: '#0d1117', color: 'white' }} disabled>Custom</option>
+              <option value="custom" disabled>Custom</option>
             </select>
             <ChevronDown size={12} style={{ color: 'var(--text-secondary)', marginLeft: '-16px', pointerEvents: 'none' }} />
           </div>
