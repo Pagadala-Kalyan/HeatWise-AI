@@ -482,7 +482,6 @@ def generate_live_grid(lat: float, lon: float, city_name="Live Location"):
     # Fetch live base temp
     base_temp = get_live_temperature(lat, lon)
     
-    offset = 0.0075
     step = 0.015
     features = []
     
@@ -490,19 +489,37 @@ def generate_live_grid(lat: float, lon: float, city_name="Live Location"):
     seed_val = int(abs(lat * 1000 + lon * 1000)) % 10000
     np.random.seed(seed_val)
     
+    # Generate 6x6 grid of 36 organic tiled polygons
+    N = 6
+    points_lat = np.zeros((N+1, N+1))
+    points_lon = np.zeros((N+1, N+1))
+    
+    for i in range(N+1):
+        for j in range(N+1):
+            lat_val = lat + (i - 3) * step
+            lon_val = lon + (j - 3) * step
+            
+            # Perturb inner intersection points to form realistic organic boundaries
+            if 0 < i < N and 0 < j < N:
+                lat_val += np.random.uniform(-step * 0.35, step * 0.35)
+                lon_val += np.random.uniform(-step * 0.35, step * 0.35)
+                
+            points_lat[i, j] = lat_val
+            points_lon[i, j] = lon_val
+            
     zone_id = 1
-    # Generate 7x7 seamless tiled grid of 49 cells
-    for i in range(7):
-        for j in range(7):
-            lat_off = (i - 3) * step
-            lon_off = (j - 3) * step
+    for i in range(N):
+        for j in range(N):
+            poly_coords = [
+                [points_lon[i, j], points_lat[i, j]],
+                [points_lon[i+1, j], points_lat[i+1, j]],
+                [points_lon[i+1, j+1], points_lat[i+1, j+1]],
+                [points_lon[i, j+1], points_lat[i, j+1]],
+                [points_lon[i, j], points_lat[i, j]]
+            ]
             
-            z_lat = lat + lat_off
-            z_lon = lon + lon_off
-            
-            # Urban Heat Island distance-based microclimate properties
-            # Distance from center cell (3,3)
-            dist = np.sqrt((i - 3)**2 + (j - 3)**2)
+            # Distance from center cell (2.5, 2.5)
+            dist = np.sqrt((i - 2.5)**2 + (j - 2.5)**2)
             
             # Center is denser, hotter, and has less vegetation
             density = max(0.20, min(0.95, 0.90 - 0.12 * dist + np.random.uniform(-0.05, 0.05)))
@@ -511,27 +528,25 @@ def generate_live_grid(lat: float, lon: float, city_name="Live Location"):
             pop = int(max(1500, min(35000, 25000 - 4500 * dist + np.random.randint(-1000, 1000))))
             area = round(1.5 + 0.5 * dist, 1)
             
-            # Dynamic naming based on sector coordinate
-            sector_name = f"Zone {chr(65 + i)}{j + 1}"
-            if i == 3 and j == 3:
-                sector_name = "City Core Center"
-            elif dist < 1.5:
-                sector_name = f"Inner City Sector {chr(65 + i)}{j + 1}"
-            elif dist > 3.0:
-                sector_name = f"Suburban Sector {chr(65 + i)}{j + 1}"
+            # Dynamic naming based on sector coordinates
+            prefixes = ["North", "South", "East", "West", "Central", "Upper", "Lower", "Greater"]
+            base_names = ["Koramangala", "Indiranagar", "Gachibowli", "Jubilee", "Krishnalanka", 
+                          "Bhavanipuram", "Governorpet", "Alipore", "Saltlake", "Bandra", 
+                          "Colaba", "Kalyan", "Benz Circle", "Patamata", "Moghalrajpuram"]
+                          
+            pref_idx = int(abs(points_lat[i, j] * 700 + points_lon[i, j] * 900)) % len(prefixes)
+            base_idx = int(abs(points_lat[i, j] * 1200 + points_lon[i, j] * 1500)) % len(base_names)
+            
+            sector_name = f"{prefixes[pref_idx]} {base_names[base_idx]}"
+            if i == 2 and j == 2:
+                sector_name = "Core Downtown District"
+            elif i == 3 and j == 3:
+                sector_name = "Central Business Sector"
                 
             # Base temperature + UHI effect
             t_var = 4.0 * density - 5.0 * ndvi - 2.5 * albedo
             noise = np.random.normal(0, 0.15)
             actual_temp = round(base_temp + t_var + noise, 1)
-            
-            poly_coords = [
-                [z_lon - offset, z_lat - offset],
-                [z_lon + offset, z_lat - offset],
-                [z_lon + offset, z_lat + offset],
-                [z_lon - offset, z_lat + offset],
-                [z_lon - offset, z_lat - offset]
-            ]
             
             feature = {
                 "type": "Feature",

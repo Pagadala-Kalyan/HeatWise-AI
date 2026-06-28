@@ -28,7 +28,8 @@ export default function MapView({
   selectedZone, 
   onSelectZone, 
   activeLayer, 
-  simulatedZoneData 
+  simulatedZoneData,
+  theme = 'dark'
 }) {
   
   // Style function for coloring polygons based on active layer
@@ -113,9 +114,13 @@ export default function MapView({
         style={{ height: '100%', width: '100%', borderRadius: '12px' }}
         zoomControl={true}
       >
-        {/* CartoDB Dark Matter basemap */}
+        {/* Basemap switching reactively based on active theme */}
         <TileLayer
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          key={theme}
+          url={theme === 'light' 
+            ? "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+            : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          }
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
         />
         

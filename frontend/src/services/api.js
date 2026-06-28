@@ -156,7 +156,7 @@ function buildCityGeoJSON(zones) {
         properties: calculateMockProperties(z),
         geometry: {
           type: "Polygon",
-          coordinates: [[
+          coordinates: z.geometry_coords ? [z.geometry_coords] : [[
             [lon - offset, lat - offset],
             [lon + offset, lat - offset],
             [lon + offset, lat + offset],
@@ -184,18 +184,40 @@ async function fetchLiveTempOffline(lat, lon) {
 
 function buildCustomMockDataset(city, lat, lon, baseTemp) {
   const step = 0.015;
+  const N = 6;
+  const points_lat = Array.from({ length: N + 1 }, () => new Float32Array(N + 1));
+  const points_lon = Array.from({ length: N + 1 }, () => new Float32Array(N + 1));
+  
+  for (let i = 0; i <= N; i++) {
+    for (let j = 0; j <= N; j++) {
+      let lat_val = lat + (i - 3) * step;
+      let lon_val = lon + (j - 3) * step;
+      
+      const seed = Math.sin(lat * 10 + lon * 20 + i * 30 + j * 40) * 10000;
+      const rand = () => {
+        const x = Math.sin(seed) * 10000;
+        return x - Math.floor(x);
+      };
+      
+      // Perturb inner grid intersections for organic boundaries
+      if (i > 0 && i < N && j > 0 && j < N) {
+        lat_val += (rand() * 0.7 - 0.35) * step;
+        lon_val += (rand() * 0.7 - 0.35) * step;
+      }
+      
+      points_lat[i][j] = lat_val;
+      points_lon[i][j] = lon_val;
+    }
+  }
+
   const zones = [];
   let zone_id = 1;
 
-  for (let i = 0; i < 7; i++) {
-    for (let j = 0; j < 7; j++) {
-      const lat_off = (i - 3) * step;
-      const lon_off = (j - 3) * step;
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      const dist = Math.sqrt(Math.pow(i - 2.5, 2) + Math.pow(j - 2.5, 2));
       
-      const dist = Math.sqrt(Math.pow(i - 3, 2) + Math.pow(j - 3, 2));
-      
-      // Simple pseudo-random generator seeded by lat, lon, and cell indices
-      const seed = Math.sin(lat * 10 + lon * 20 + i * 30 + j * 40) * 10000;
+      const seed = Math.sin(lat * 12 + lon * 24 + i * 36 + j * 48) * 10000;
       const rand = () => {
         const x = Math.sin(seed + zone_id) * 10000;
         return x - Math.floor(x);
@@ -207,13 +229,20 @@ function buildCustomMockDataset(city, lat, lon, baseTemp) {
       const pop = Math.floor(Math.max(1500, Math.min(35000, 25000 - 4500 * dist + (rand() * 2000 - 1000))));
       const area = parseFloat((1.5 + 0.5 * dist).toFixed(1));
 
-      let name = `Zone ${String.fromCharCode(65 + i)}${j + 1}`;
-      if (i === 3 && j === 3) {
-        name = "City Core Center";
-      } else if (dist < 1.5) {
-        name = `Inner City Sector ${String.fromCharCode(65 + i)}${j + 1}`;
-      } else if (dist > 3.0) {
-        name = `Suburban Sector ${String.fromCharCode(65 + i)}${j + 1}`;
+      // Dynamic organic naming based on geographic seeds
+      const prefixes = ["North", "South", "East", "West", "Central", "Upper", "Lower", "Greater"];
+      const base_names = ["Koramangala", "Indiranagar", "Gachibowli", "Jubilee", "Krishnalanka", 
+                          "Bhavanipuram", "Governorpet", "Alipore", "Saltlake", "Bandra", 
+                          "Colaba", "Kalyan", "Benz Circle", "Patamata", "Moghalrajpuram"];
+                          
+      const pref_idx = Math.floor(Math.abs(points_lat[i][j] * 700 + points_lon[i][j] * 900)) % prefixes.length;
+      const base_idx = Math.floor(Math.abs(points_lat[i][j] * 1200 + points_lon[i][j] * 1500)) % base_names.length;
+      
+      let name = `${prefixes[pref_idx]} ${base_names[base_idx]}`;
+      if (i === 2 && j === 2) {
+        name = "Core Downtown District";
+      } else if (i === 3 && j === 3) {
+        name = "Central Business Sector";
       }
 
       const t_var = 4.0 * density - 5.0 * ndvi - 2.5 * albedo;
@@ -223,13 +252,20 @@ function buildCustomMockDataset(city, lat, lon, baseTemp) {
       zones.push({
         id: zone_id,
         name,
-        center: [lat + lat_off, lon + lon_off],
+        center: [(points_lat[i][j] + points_lat[i+1][j+1]) / 2, (points_lon[i][j] + points_lon[i+1][j+1]) / 2],
         ndvi,
         density,
         albedo,
         actual_temp,
         population_density: pop,
-        area_sq_km: area
+        area_sq_km: area,
+        geometry_coords: [
+          [points_lon[i][j], points_lat[i][j]],
+          [points_lon[i+1][j], points_lat[i+1][j]],
+          [points_lon[i+1][j+1], points_lat[i+1][j+1]],
+          [points_lon[i][j+1], points_lat[i][j+1]],
+          [points_lon[i][j], points_lat[i][j]]
+        ]
       });
       zone_id++;
     }

@@ -47,6 +47,12 @@ export default function App() {
   const [activeRightTab, setActiveRightTab] = useState('diagnosis'); // 'diagnosis' or 'optimizer'
   const [selectedCity, setSelectedCity] = useState('vijayawada');
   const [currentPage, setCurrentPage] = useState(0); // 0 = Explorer, 1 = Sandbox, 2 = Optimizer
+  const [theme, setTheme] = useState('dark'); // 'dark' or 'light'
+
+  // Reflect theme choice onto document root
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
   
   // Interactive Mouse Parallax Drift for Cosmic Nebulae
   useEffect(() => {
@@ -476,6 +482,17 @@ export default function App() {
           <div className="glass-panel" style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.02)', color: 'var(--text-secondary)', fontSize: '12px', fontWeight: 500, borderRadius: '10px' }}>
             🌡️ <strong style={{ color: 'var(--primary-red)' }}>{avgTemp}°C</strong>
           </div>
+
+          {/* Theme sliding toggle switch */}
+          <div 
+            onClick={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')} 
+            className="theme-switch-container"
+            title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+          >
+            <div className={`theme-switch-pill ${theme === 'light' ? 'light-active' : ''}`}></div>
+            <span className="theme-icon">🌙</span>
+            <span className="theme-icon">☀️</span>
+          </div>
         </div>
       </header>
 
@@ -535,6 +552,7 @@ export default function App() {
                     onSelectZone={setSelectedZone}
                     activeLayer={activeLayer}
                     simulatedZoneData={simulatedZoneData}
+                    theme={theme}
                   />
                 </div>
               </div>
