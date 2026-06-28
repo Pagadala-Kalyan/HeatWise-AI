@@ -34,6 +34,7 @@ class BudgetRequest(BaseModel):
     city: Optional[str] = Field("vijayawada", description="City name")
     latitude: Optional[float] = Field(None, description="Latitude of custom location")
     longitude: Optional[float] = Field(None, description="Longitude of custom location")
+    zones: Optional[List[dict]] = Field(None, description="Active zones list from client")
 
 class SimulationRequest(BaseModel):
     zone_id: int = Field(..., description="ID of the zone to simulate")
@@ -43,6 +44,7 @@ class SimulationRequest(BaseModel):
     city: Optional[str] = Field("vijayawada", description="City name")
     latitude: Optional[float] = Field(None, description="Latitude of custom location")
     longitude: Optional[float] = Field(None, description="Longitude of custom location")
+    zone_properties: Optional[dict] = Field(None, description="Active zone properties from client")
 
 class ZoneSimulationInput(BaseModel):
     zone_id: int = Field(..., description="ID of the zone to simulate")
@@ -55,6 +57,7 @@ class BatchSimulationRequest(BaseModel):
     city: Optional[str] = Field("vijayawada", description="City name")
     latitude: Optional[float] = Field(None, description="Latitude of custom location")
     longitude: Optional[float] = Field(None, description="Longitude of custom location")
+    zones: Optional[List[dict]] = Field(None, description="Active zones list from client")
 
 @app.get("/api/city-data")
 def get_city_data(city: str = "vijayawada", latitude: Optional[float] = None, longitude: Optional[float] = None):
@@ -67,9 +70,12 @@ def get_city_data(city: str = "vijayawada", latitude: Optional[float] = None, lo
 @app.post("/api/optimize")
 def optimize_budget(req: BudgetRequest):
     try:
-        city = req.city or "vijayawada"
-        geojson = predictor.process_city_data(city, req.latitude, req.longitude)
-        features = geojson["features"]
+        if req.zones:
+            features = [{"properties": z} for z in req.zones]
+        else:
+            city = req.city or "vijayawada"
+            geojson = predictor.process_city_data(city, req.latitude, req.longitude)
+            features = geojson["features"]
         # Convert Crore to Rupees
         budget_rupees = int(req.budget_crore * 10000000)
         results = optimize_cooling_investments(features, budget_rupees)
@@ -80,19 +86,22 @@ def optimize_budget(req: BudgetRequest):
 @app.post("/api/simulate")
 def simulate_intervention(req: SimulationRequest):
     try:
-        city = req.city or "vijayawada"
-        geojson = predictor.process_city_data(city, req.latitude, req.longitude)
-        target_feature = None
-        
-        for feature in geojson["features"]:
-            if feature["properties"]["id"] == req.zone_id:
-                target_feature = feature
-                break
-                
-        if not target_feature:
-            raise HTTPException(status_code=404, detail=f"Zone with ID {req.zone_id} not found")
+        if req.zone_properties:
+            props = req.zone_properties
+        else:
+            city = req.city or "vijayawada"
+            geojson = predictor.process_city_data(city, req.latitude, req.longitude)
+            target_feature = None
             
-        props = target_feature["properties"]
+            for feature in geojson["features"]:
+                if feature["properties"]["id"] == req.zone_id:
+                    target_feature = feature
+                    break
+                    
+            if not target_feature:
+                raise HTTPException(status_code=404, detail=f"Zone with ID {req.zone_id} not found")
+                
+            props = target_feature["properties"]
         
         # Calculate new environmental indicators based on inputs
         # 1 tree increases NDVI by a small fraction in the 1.6km x 1.6km grid
@@ -152,9 +161,14 @@ def simulate_intervention(req: SimulationRequest):
 @app.post("/api/simulate-batch")
 def simulate_batch_interventions(req: BatchSimulationRequest):
     try:
-        city = req.city or "vijayawada"
-        geojson = predictor.process_city_data(city, req.latitude, req.longitude)
-        features_map = {f["properties"]["id"]: f for f in geojson["features"]}
+        if req.zones:
+            features = [{"properties": z} for z in req.zones]
+        else:
+            city = req.city or "vijayawada"
+            geojson = predictor.process_city_data(city, req.latitude, req.longitude)
+            features = geojson["features"]
+            
+        features_map = {f["properties"]["id"]: f for f in features}
         
         results = {}
         for sim_input in req.simulations:

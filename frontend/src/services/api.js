@@ -389,7 +389,9 @@ export const api = {
       const response = await fetch(url);
       if (!response.ok) throw new Error("Backend response error");
       this.isOffline = false;
-      return await response.json();
+      const data = await response.json();
+      this.activeMockDataset = data;
+      return data;
     } catch (error) {
       console.warn("Backend offline. Loading local demonstration map data...", error);
       this.isOffline = true;
@@ -406,6 +408,10 @@ export const api = {
 
   // Solve budget optimization problem (Knapsack)
   async optimizeBudget(budgetCrore, city = "vijayawada", latitude = null, longitude = null) {
+    let activeZones = null;
+    if (this.activeMockDataset && this.activeMockDataset.features) {
+      activeZones = this.activeMockDataset.features.map(f => f.properties);
+    }
     try {
       const response = await fetch(`${API_BASE}/optimize`, {
         method: "POST",
@@ -414,7 +420,8 @@ export const api = {
           budget_crore: parseFloat(budgetCrore), 
           city,
           latitude: latitude !== null ? parseFloat(latitude) : null,
-          longitude: longitude !== null ? parseFloat(longitude) : null
+          longitude: longitude !== null ? parseFloat(longitude) : null,
+          zones: activeZones
         })
       });
       if (!response.ok) throw new Error("Backend optimization failed");
@@ -431,6 +438,11 @@ export const api = {
 
   // Run a what-if microclimate simulation
   async simulateIntervention(zoneId, trees, coolRoofsPercent, pavement, city = "vijayawada", latitude = null, longitude = null) {
+    let activeProps = null;
+    if (this.activeMockDataset && this.activeMockDataset.features) {
+      const feat = this.activeMockDataset.features.find(f => f.properties.id === parseInt(zoneId));
+      if (feat) activeProps = feat.properties;
+    }
     try {
       const response = await fetch(`${API_BASE}/simulate`, {
         method: "POST",
@@ -442,7 +454,8 @@ export const api = {
           reflective_pavement: !!pavement,
           city,
           latitude: latitude !== null ? parseFloat(latitude) : null,
-          longitude: longitude !== null ? parseFloat(longitude) : null
+          longitude: longitude !== null ? parseFloat(longitude) : null,
+          zone_properties: activeProps
         })
       });
       if (!response.ok) throw new Error("Backend simulation failed");
@@ -459,6 +472,10 @@ export const api = {
 
   // Run batch microclimate simulations
   async simulateBatchInterventions(simulations, city = "vijayawada", latitude = null, longitude = null) {
+    let activeZones = null;
+    if (this.activeMockDataset && this.activeMockDataset.features) {
+      activeZones = this.activeMockDataset.features.map(f => f.properties);
+    }
     try {
       const response = await fetch(`${API_BASE}/simulate-batch`, {
         method: "POST",
@@ -467,7 +484,8 @@ export const api = {
           simulations, 
           city,
           latitude: latitude !== null ? parseFloat(latitude) : null,
-          longitude: longitude !== null ? parseFloat(longitude) : null
+          longitude: longitude !== null ? parseFloat(longitude) : null,
+          zones: activeZones
         })
       });
       if (!response.ok) throw new Error("Backend batch simulation failed");
