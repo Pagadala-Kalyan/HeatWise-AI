@@ -182,93 +182,193 @@ async function fetchLiveTempOffline(lat, lon) {
   return 35.0;
 }
 
-function buildCustomMockDataset(city, lat, lon, baseTemp) {
-  const step = 0.015;
-  const N = 6;
-  const points_lat = Array.from({ length: N + 1 }, () => new Float32Array(N + 1));
-  const points_lon = Array.from({ length: N + 1 }, () => new Float32Array(N + 1));
+function clipPolygon(poly, p1, p2) {
+  const mx = (p1.lon + p2.lon) / 2;
+  const my = (p1.lat + p2.lat) / 2;
   
-  for (let i = 0; i <= N; i++) {
-    for (let j = 0; j <= N; j++) {
-      let lat_val = lat + (i - 3) * step;
-      let lon_val = lon + (j - 3) * step;
-      
-      const seed = Math.sin(lat * 10 + lon * 20 + i * 30 + j * 40) * 10000;
-      const rand = () => {
-        const x = Math.sin(seed) * 10000;
-        return x - Math.floor(x);
-      };
-      
-      // Perturb inner grid intersections for organic boundaries
-      if (i > 0 && i < N && j > 0 && j < N) {
-        lat_val += (rand() * 0.7 - 0.35) * step;
-        lon_val += (rand() * 0.7 - 0.35) * step;
+  const nx = p1.lon - p2.lon;
+  const ny = p1.lat - p2.lat;
+  
+  const isInside = (x, y) => {
+    return (x - mx) * nx + (y - my) * ny > 0;
+  };
+  
+  const getIntersection = (x1, y1, x2, y2) => {
+    const num = (mx - x1) * nx + (my - y1) * ny;
+    const den = (x2 - x1) * nx + (y2 - y1) * ny;
+    if (Math.abs(den) < 1e-9) return null;
+    const t = num / den;
+    if (t < 0 || t > 1) return null;
+    return [x1 + t * (x2 - x1), y1 + t * (y2 - y1)];
+  };
+  
+  const clipped = [];
+  if (poly.length === 0) return clipped;
+  
+  for (let i = 0; i < poly.length; i++) {
+    const current = poly[i];
+    const next = poly[(i + 1) % poly.length];
+    
+    const currInside = isInside(current[0], current[1]);
+    const nextInside = isInside(next[0], next[1]);
+    
+    if (currInside) {
+      clipped.push(current);
+    }
+    
+    if (currInside !== nextInside) {
+      const intersect = getIntersection(current[0], current[1], next[0], next[1]);
+      if (intersect) {
+        clipped.push(intersect);
       }
-      
-      points_lat[i][j] = lat_val;
-      points_lon[i][j] = lon_val;
     }
   }
+  
+  return clipped;
+}
+
+function smoothPolygon(coords, iterations = 1) {
+  let poly = [...coords];
+  if (poly.length === 0) return poly;
+  
+  let isClosed = false;
+  if (poly.length > 2 && poly[0][0] === poly[poly.length - 1][0] && poly[0][1] === poly[poly.length - 1][1]) {
+    poly.pop();
+    isClosed = true;
+  }
+  
+  for (let iter = 0; iter < iterations; iter++) {
+    const nextPoly = [];
+    for (let i = 0; i < poly.length; i++) {
+      const p0 = poly[i];
+      const p1 = poly[(i + 1) % poly.length];
+      
+      const qx = 0.75 * p0[0] + 0.25 * p1[0];
+      const qy = 0.75 * p0[1] + 0.25 * p1[1];
+      
+      const rx = 0.25 * p0[0] + 0.75 * p1[0];
+      const ry = 0.25 * p0[1] + 0.75 * p1[1];
+      
+      nextPoly.push([qx, qy]);
+      nextPoly.push([rx, ry]);
+    }
+    poly = nextPoly;
+  }
+  
+  if (isClosed && poly.length > 0) {
+    poly.push([poly[0][0], poly[0][1]]);
+  }
+  return poly;
+}
+
+async function fetchOSMSuburbs(lat, lon) {
+  const query = `[out:json][timeout:10];(node["place"~"suburb|neighbourhood|quarter"](around:12000,${lat},${lon}););out body 35;`;
+  const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+  try {
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = await res.json();
+      return (data.elements || [])
+        .map(el => ({
+          name: el.tags?.name,
+          lat: el.lat,
+          lon: el.lon
+        }))
+        .filter(s => s.name);
+    }
+  } catch (e) {
+    console.warn("OSM Overpass client fetch failed:", e);
+  }
+  return [];
+}
+
+async function buildCustomMockDataset(city, lat, lon, baseTemp) {
+  let suburbs = await fetchOSMSuburbs(lat, lon);
+  
+  const min_lat = lat - 0.03, max_lat = lat + 0.03;
+  const min_lon = lon - 0.03, max_lon = lon + 0.03;
+
+  if (suburbs.length < 6) {
+    console.log("Using client fallback synthetic suburbs...");
+    suburbs = [];
+    const fallback_names = [
+      "Central Core", "North Gate", "East Extension", "South Hub", 
+      "West District", "North-East Sector", "South-East Quarter", "South-West District", 
+      "Riverside Wards", "Highland Belt", "Industrial Quarters", "Green Valley"
+    ];
+    fallback_names.forEach((name, idx) => {
+      const angle = (idx / fallback_names.length) * 2 * Math.PI;
+      const r = 0.015 + 0.005 * Math.sin(idx);
+      suburbs.push({
+        name,
+        lat: lat + r * Math.sin(angle),
+        lon: lon + r * Math.cos(angle)
+      });
+    });
+  }
+
+  const unique = [];
+  suburbs.forEach(s => {
+    if (!unique.some(u => Math.abs(u.lat - s.lat) < 1e-4 && Math.abs(u.lon - s.lon) < 1e-4)) {
+      unique.push(s);
+    }
+  });
+  suburbs = unique;
 
   const zones = [];
   let zone_id = 1;
 
-  for (let i = 0; i < N; i++) {
-    for (let j = 0; j < N; j++) {
-      const dist = Math.sqrt(Math.pow(i - 2.5, 2) + Math.pow(j - 2.5, 2));
-      
-      const seed = Math.sin(lat * 12 + lon * 24 + i * 36 + j * 48) * 10000;
-      const rand = () => {
-        const x = Math.sin(seed + zone_id) * 10000;
-        return x - Math.floor(x);
-      };
+  for (let idx = 0; idx < suburbs.length; idx++) {
+    const s = suburbs[idx];
+    
+    let poly = [
+      [min_lon, min_lat],
+      [max_lon, min_lat],
+      [max_lon, max_lat],
+      [min_lon, max_lat],
+      [min_lon, min_lat]
+    ];
 
-      const density = Math.max(0.20, Math.min(0.95, 0.90 - 0.12 * dist + (rand() * 0.1 - 0.05)));
-      const ndvi = Math.max(0.08, Math.min(0.65, 0.12 + 0.08 * dist + (rand() * 0.08 - 0.04)));
-      const albedo = Math.max(0.09, Math.min(0.24, 0.11 + 0.02 * dist + (rand() * 0.04 - 0.02)));
-      const pop = Math.floor(Math.max(1500, Math.min(35000, 25000 - 4500 * dist + (rand() * 2000 - 1000))));
-      const area = parseFloat((1.5 + 0.5 * dist).toFixed(1));
-
-      // Dynamic organic naming based on geographic seeds
-      const prefixes = ["North", "South", "East", "West", "Central", "Upper", "Lower", "Greater"];
-      const base_names = ["Koramangala", "Indiranagar", "Gachibowli", "Jubilee", "Krishnalanka", 
-                          "Bhavanipuram", "Governorpet", "Alipore", "Saltlake", "Bandra", 
-                          "Colaba", "Kalyan", "Benz Circle", "Patamata", "Moghalrajpuram"];
-                          
-      const pref_idx = Math.floor(Math.abs(points_lat[i][j] * 700 + points_lon[i][j] * 900)) % prefixes.length;
-      const base_idx = Math.floor(Math.abs(points_lat[i][j] * 1200 + points_lon[i][j] * 1500)) % base_names.length;
-      
-      let name = `${prefixes[pref_idx]} ${base_names[base_idx]}`;
-      if (i === 2 && j === 2) {
-        name = "Core Downtown District";
-      } else if (i === 3 && j === 3) {
-        name = "Central Business Sector";
-      }
-
-      const t_var = 4.0 * density - 5.0 * ndvi - 2.5 * albedo;
-      const noise = rand() * 0.3 - 0.15;
-      const actual_temp = parseFloat((baseTemp + t_var + noise).toFixed(1));
-
-      zones.push({
-        id: zone_id,
-        name,
-        center: [(points_lat[i][j] + points_lat[i+1][j+1]) / 2, (points_lon[i][j] + points_lon[i+1][j+1]) / 2],
-        ndvi,
-        density,
-        albedo,
-        actual_temp,
-        population_density: pop,
-        area_sq_km: area,
-        geometry_coords: [
-          [points_lon[i][j], points_lat[i][j]],
-          [points_lon[i+1][j], points_lat[i+1][j]],
-          [points_lon[i+1][j+1], points_lat[i+1][j+1]],
-          [points_lon[i][j+1], points_lat[i][j+1]],
-          [points_lon[i][j], points_lat[i][j]]
-        ]
-      });
-      zone_id++;
+    for (let o_idx = 0; o_idx < suburbs.length; o_idx++) {
+      if (o_idx === idx) continue;
+      poly = clipPolygon(poly, s, suburbs[o_idx]);
+      if (poly.length === 0) break;
     }
+
+    if (poly.length === 0) continue;
+
+    poly = smoothPolygon(poly, 1);
+
+    const dist = Math.sqrt(Math.pow(s.lat - lat, 2) + Math.pow(s.lon - lon, 2)) / 0.015;
+    const seed = Math.sin(s.lat * 12 + s.lon * 24) * 10000;
+    const rand = () => {
+      const x = Math.sin(seed + zone_id) * 10000;
+      return x - Math.floor(x);
+    };
+
+    const density = Math.max(0.20, Math.min(0.95, 0.90 - 0.12 * dist + (rand() * 0.1 - 0.05)));
+    const ndvi = Math.max(0.08, Math.min(0.65, 0.12 + 0.08 * dist + (rand() * 0.08 - 0.04)));
+    const albedo = Math.max(0.09, Math.min(0.24, 0.11 + 0.02 * dist + (rand() * 0.04 - 0.02)));
+    const pop = Math.floor(Math.max(1500, Math.min(35000, 25000 - 4500 * dist + (rand() * 2000 - 1000))));
+    const area = parseFloat((1.5 + 0.5 * dist).toFixed(1));
+
+    const t_var = 4.0 * density - 5.0 * ndvi - 2.5 * albedo;
+    const noise = rand() * 0.3 - 0.15;
+    const actual_temp = parseFloat((baseTemp + t_var + noise).toFixed(1));
+
+    zones.push({
+      id: zone_id,
+      name: s.name,
+      center: [s.lat, s.lon],
+      ndvi,
+      density,
+      albedo,
+      actual_temp,
+      population_density: pop,
+      area_sq_km: area,
+      geometry_coords: poly
+    });
+    zone_id++;
   }
 
   return buildCityGeoJSON(zones);
@@ -294,7 +394,7 @@ export const api = {
       this.isOffline = true;
       if (latitude !== null && longitude !== null) {
         const baseTemp = await fetchLiveTempOffline(latitude, longitude);
-        this.activeMockDataset = buildCustomMockDataset(city, latitude, longitude, baseTemp);
+        this.activeMockDataset = await buildCustomMockDataset(city, latitude, longitude, baseTemp);
       } else {
         const zones = CITY_ZONES[city.toLowerCase()] || CITY_ZONES.vijayawada;
         this.activeMockDataset = buildCityGeoJSON(zones);

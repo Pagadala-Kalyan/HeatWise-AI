@@ -478,96 +478,210 @@ def get_live_temperature(lat: float, lon: float) -> float:
         # Fallback to a reasonable default temperature (e.g. 35.0)
         return 35.0
 
+def fetch_osm_suburbs(lat: float, lon: float) -> list:
+    url = "https://overpass-api.de/api/interpreter"
+    query = f"""[out:json][timeout:10];
+    (
+      node["place"~"suburb|neighbourhood|quarter"](around:12000, {lat}, {lon});
+    );
+    out body 35;"""
+    
+    try:
+        data = urllib.parse.urlencode({"data": query}).encode("utf-8")
+        req = urllib.request.Request(url, data=data, headers={'User-Agent': 'HeatWise-AI-Agent'})
+        with urllib.request.urlopen(req, timeout=8) as response:
+            res = json.loads(response.read().decode())
+            elements = res.get("elements", [])
+            suburbs = []
+            for el in elements:
+                name = el.get("tags", {}).get("name")
+                if name:
+                    suburbs.append({
+                        "name": name,
+                        "lat": el.get("lat"),
+                        "lon": el.get("lon")
+                    })
+            return suburbs
+    except Exception as e:
+        print(f"OSM Overpass suburb fetch failed: {e}")
+        return []
+
+def clip_polygon_py(poly, p1, p2):
+    # Midpoint of the two sites
+    mx = (p1["lon"] + p2["lon"]) / 2.0
+    my = (p1["lat"] + p2["lat"]) / 2.0
+    
+    # Normal vector pointing to p1
+    nx = p1["lon"] - p2["lon"]
+    ny = p1["lat"] - p2["lat"]
+    
+    def is_inside(x, y):
+        return (x - mx) * nx + (y - my) * ny > 0
+        
+    def get_intersection(x1, y1, x2, y2):
+        num = (mx - x1) * nx + (my - y1) * ny
+        den = (x2 - x1) * nx + (y2 - y1) * ny
+        if abs(den) < 1e-9:
+            return None
+        t = num / den
+        if 0 <= t <= 1:
+            return [x1 + t * (x2 - x1), y1 + t * (y2 - y1)]
+        return None
+        
+    clipped = []
+    if not poly:
+        return clipped
+        
+    for i in range(len(poly)):
+        current = poly[i]
+        next_pt = poly[(i + 1) % len(poly)]
+        
+        curr_inside = is_inside(current[0], current[1])
+        next_inside = is_inside(next_pt[0], next_pt[1])
+        
+        if curr_inside:
+            clipped.append(current)
+            
+        if curr_inside != next_inside:
+            intersect = get_intersection(current[0], current[1], next_pt[0], next_pt[1])
+            if intersect:
+                clipped.append(intersect)
+                
+    return clipped
+
+def smooth_polygon_py(coords, iterations=1):
+    poly = list(coords)
+    if not poly:
+        return poly
+        
+    is_closed = False
+    if len(poly) > 2 and poly[0][0] == poly[-1][0] and poly[0][1] == poly[-1][1]:
+        poly.pop()
+        is_closed = True
+        
+    for _ in range(iterations):
+        next_poly = []
+        for i in range(len(poly)):
+            p0 = poly[i]
+            p1 = poly[(i + 1) % len(poly)]
+            
+            # Chaikin's corner-cutting coefficients
+            qx = 0.75 * p0[0] + 0.25 * p1[0]
+            qy = 0.75 * p0[1] + 0.25 * p1[1]
+            
+            rx = 0.25 * p0[0] + 0.75 * p1[0]
+            ry = 0.25 * p0[1] + 0.75 * p1[1]
+            
+            next_poly.append([qx, qy])
+            next_poly.append([rx, ry])
+        poly = next_poly
+        
+    if is_closed and poly:
+        poly.append([poly[0][0], poly[0][1]])
+        
+    return poly
+
 def generate_live_grid(lat: float, lon: float, city_name="Live Location"):
     # Fetch live base temp
     base_temp = get_live_temperature(lat, lon)
     
-    step = 0.015
+    # 1. Fetch real OSM suburbs
+    suburbs = fetch_osm_suburbs(lat, lon)
+    
+    # Bounding box limits for the Voronoi grid
+    min_lat, max_lat = lat - 0.03, lat + 0.03
+    min_lon, max_lon = lon - 0.03, lon + 0.03
+    
+    # Fallback to synthetic suburbs if OSM fetch failed or returned too few nodes
+    if len(suburbs) < 6:
+        print("Using synthetic fallback suburbs...")
+        suburbs = []
+        fallback_names = [
+            "Central Core", "North Gate", "East Extension", "South Hub", 
+            "West District", "North-East Sector", "South-East Quarter", "South-West District", 
+            "Riverside Wards", "Highland Belt", "Industrial Quarters", "Green Valley"
+        ]
+        for idx, name in enumerate(fallback_names):
+            angle = (idx / len(fallback_names)) * 2 * np.pi
+            r = 0.015 + 0.005 * np.sin(idx)
+            suburbs.append({
+                "name": name,
+                "lat": lat + r * np.sin(angle),
+                "lon": lon + r * np.cos(angle)
+            })
+            
+    # Remove duplicates or extremely close coordinates to avoid clipping bugs
+    unique_suburbs = []
+    for s in suburbs:
+        if not any(abs(s["lat"] - u["lat"]) < 1e-4 and abs(s["lon"] - u["lon"]) < 1e-4 for u in unique_suburbs):
+            unique_suburbs.append(s)
+    suburbs = unique_suburbs
+            
     features = []
-    
-    # Seeding to ensure consistent random deviations for the same lat/lon values
-    seed_val = int(abs(lat * 1000 + lon * 1000)) % 10000
-    np.random.seed(seed_val)
-    
-    # Generate 6x6 grid of 36 organic tiled polygons
-    N = 6
-    points_lat = np.zeros((N+1, N+1))
-    points_lon = np.zeros((N+1, N+1))
-    
-    for i in range(N+1):
-        for j in range(N+1):
-            lat_val = lat + (i - 3) * step
-            lon_val = lon + (j - 3) * step
-            
-            # Perturb inner intersection points to form realistic organic boundaries
-            if 0 < i < N and 0 < j < N:
-                lat_val += np.random.uniform(-step * 0.35, step * 0.35)
-                lon_val += np.random.uniform(-step * 0.35, step * 0.35)
-                
-            points_lat[i, j] = lat_val
-            points_lon[i, j] = lon_val
-            
     zone_id = 1
-    for i in range(N):
-        for j in range(N):
-            poly_coords = [
-                [points_lon[i, j], points_lat[i, j]],
-                [points_lon[i+1, j], points_lat[i+1, j]],
-                [points_lon[i+1, j+1], points_lat[i+1, j+1]],
-                [points_lon[i, j+1], points_lat[i, j+1]],
-                [points_lon[i, j], points_lat[i, j]]
-            ]
-            
-            # Distance from center cell (2.5, 2.5)
-            dist = np.sqrt((i - 2.5)**2 + (j - 2.5)**2)
-            
-            # Center is denser, hotter, and has less vegetation
-            density = max(0.20, min(0.95, 0.90 - 0.12 * dist + np.random.uniform(-0.05, 0.05)))
-            ndvi = max(0.08, min(0.65, 0.12 + 0.08 * dist + np.random.uniform(-0.04, 0.04)))
-            albedo = max(0.09, min(0.24, 0.11 + 0.02 * dist + np.random.uniform(-0.02, 0.02)))
-            pop = int(max(1500, min(35000, 25000 - 4500 * dist + np.random.randint(-1000, 1000))))
-            area = round(1.5 + 0.5 * dist, 1)
-            
-            # Dynamic naming based on sector coordinates
-            prefixes = ["North", "South", "East", "West", "Central", "Upper", "Lower", "Greater"]
-            base_names = ["Koramangala", "Indiranagar", "Gachibowli", "Jubilee", "Krishnalanka", 
-                          "Bhavanipuram", "Governorpet", "Alipore", "Saltlake", "Bandra", 
-                          "Colaba", "Kalyan", "Benz Circle", "Patamata", "Moghalrajpuram"]
-                          
-            pref_idx = int(abs(points_lat[i, j] * 700 + points_lon[i, j] * 900)) % len(prefixes)
-            base_idx = int(abs(points_lat[i, j] * 1200 + points_lon[i, j] * 1500)) % len(base_names)
-            
-            sector_name = f"{prefixes[pref_idx]} {base_names[base_idx]}"
-            if i == 2 and j == 2:
-                sector_name = "Core Downtown District"
-            elif i == 3 and j == 3:
-                sector_name = "Central Business Sector"
+    
+    # Compute Voronoi cells for each suburb
+    for idx, s in enumerate(suburbs):
+        # Initial polygon is the bounding box
+        poly = [
+            [min_lon, min_lat],
+            [max_lon, min_lat],
+            [max_lon, max_lat],
+            [min_lon, max_lat],
+            [min_lon, min_lat]
+        ]
+        
+        # Clip against all other suburbs
+        for o_idx, other in enumerate(suburbs):
+            if o_idx == idx:
+                continue
+            poly = clip_polygon_py(poly, s, other)
+            if not poly:
+                break
                 
-            # Base temperature + UHI effect
-            t_var = 4.0 * density - 5.0 * ndvi - 2.5 * albedo
-            noise = np.random.normal(0, 0.15)
-            actual_temp = round(base_temp + t_var + noise, 1)
+        if not poly:
+            continue
             
-            feature = {
-                "type": "Feature",
-                "properties": {
-                    "id": zone_id,
-                    "name": sector_name,
-                    "ndvi": round(ndvi, 3),
-                    "building_density": round(density, 3),
-                    "albedo": round(albedo, 3),
-                    "actual_temp": actual_temp,
-                    "population_density": pop,
-                    "area_sq_km": area
-                },
-                "geometry": {
-                    "type": "Polygon",
-                    "coordinates": [poly_coords]
-                }
+        # Smooth the polygon vertices using Chaikin's algorithm for curved boundaries
+        poly = smooth_polygon_py(poly, iterations=1)
+        
+        # Distance from center
+        dist = np.sqrt((s["lat"] - lat)**2 + (s["lon"] - lon)**2) / 0.015
+        
+        # Random parameters based on coordinates seed
+        seed_val = int(abs(s["lat"] * 1000 + s["lon"] * 1000)) % 10000
+        np.random.seed(seed_val)
+        
+        density = max(0.20, min(0.95, 0.90 - 0.12 * dist + np.random.uniform(-0.05, 0.05)))
+        ndvi = max(0.08, min(0.65, 0.12 + 0.08 * dist + np.random.uniform(-0.04, 0.04)))
+        albedo = max(0.09, min(0.24, 0.11 + 0.02 * dist + np.random.uniform(-0.02, 0.02)))
+        pop = int(max(1500, min(35000, 25000 - 4500 * dist + np.random.randint(-1000, 1000))))
+        area = round(1.5 + 0.5 * dist, 1)
+        
+        t_var = 4.0 * density - 5.0 * ndvi - 2.5 * albedo
+        noise = np.random.normal(0, 0.15)
+        actual_temp = round(base_temp + t_var + noise, 1)
+        
+        feature = {
+            "type": "Feature",
+            "properties": {
+                "id": zone_id,
+                "name": s["name"],
+                "ndvi": round(ndvi, 3),
+                "building_density": round(density, 3),
+                "albedo": round(albedo, 3),
+                "actual_temp": actual_temp,
+                "population_density": pop,
+                "area_sq_km": area
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [poly]
             }
-            features.append(feature)
-            zone_id += 1
-            
+        }
+        features.append(feature)
+        zone_id += 1
+        
     return {
         "type": "FeatureCollection",
         "features": features
